@@ -44,5 +44,13 @@ content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵
    sandbox), T8(폴더 뷰)
 3. 발견 이슈 수정 → Web Store 배포 검토 여부 결정
 
-## 미결
-- git init/commit 안 함 (Nick 확인 후)
+## 4차 작업 (같은 날) — git/배포 체계
+- **git 정리 완료**: init → 첫 커밋 → GitHub **private** repo `jwj-nick/render-ext` 생성+push
+  (CLAUDE.md §7 private-first). `.gitignore`는 `dist/`만 제외.
+- **zip 배포 체계**: `tools/make-zip.ps1` — `app/` + `INSTALL.md` + `setup/register-mime.ps1`을
+  `dist/render-ext-v<ver>.zip`으로 패키징 (버전은 manifest에서 자동). 빌드 없음.
+- **Release v0.2.0** 발행 + zip 첨부: https://github.com/jwj-nick/render-ext/releases/tag/v0.2.0
+- **INSTALL.md 신설(SSOT)**: zip/clone 두 경로 기준 4단계 설치 + 사용법 + 문제해결 표.
+  README 설치 섹션은 INSTALL.md 요약으로 교체.
+- 버전 올릴 때 절차: manifest version 수정 → make-zip.ps1 → git tag vX.Y.Z →
+  `gh release create vX.Y.Z dist/render-ext-vX.Y.Z.zip`
