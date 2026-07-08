@@ -52,4 +52,8 @@
     rendered: rootDiv,
     original: srcPre
   });
+
+  if (typeof rxMountSidebar === 'function') {
+    rxMountSidebar({ kind: 'code', tocRoot: null });
+  }
 })();

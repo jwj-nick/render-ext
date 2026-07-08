@@ -2,7 +2,7 @@
 // options_ui 페이지와 action 팝업이 이 파일 하나를 공유한다.
 'use strict';
 
-const DEFAULTS = { enabled: true, markdown: true, code: true, dirlist: true };
+const DEFAULTS = { enabled: true, markdown: true, code: true, sidebar: true, dirlist: true };
 const KEYS = Object.keys(DEFAULTS);
 
 const group = document.getElementById('group');

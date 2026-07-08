@@ -153,4 +153,8 @@
   }
 
   rxMakeToolbar({ label: spec.label || 'Markdown', rendered: root, original: srcPre });
+
+  if (typeof rxMountSidebar === 'function') {
+    rxMountSidebar({ kind: 'markdown', tocRoot: root });
+  }
 })();

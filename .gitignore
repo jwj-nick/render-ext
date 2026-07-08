@@ -1,2 +1,5 @@
 # release artifacts (rebuild with tools/make-zip.ps1)
 dist/
+
+# test evidence screenshots (regenerate via headless chrome)
+tests/*_result.png

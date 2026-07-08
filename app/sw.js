@@ -18,15 +18,17 @@ const MD_JS = [
   'libs/wavedrom-skin-default.js',
   'libs/mermaid.min.js',
   'render/ui.js',
+  'render/sidebar.js',
   'render/markdown.js'
 ];
 const MD_CSS = [
   'libs/github-markdown.min.css',
   'styles/hljs-theme.css',
+  'styles/sidebar.css',
   'styles/base.css'
 ];
 
-const CODE_CSS = ['styles/hljs-theme.css', 'styles/base.css'];
+const CODE_CSS = ['styles/hljs-theme.css', 'styles/sidebar.css', 'styles/base.css'];
 
 // Only files listed in the registry may be injected as extra grammars.
 const EXTRA_LIB_WHITELIST = new Set(
@@ -49,7 +51,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         await chrome.scripting.insertCSS({ target, files: CODE_CSS });
         await chrome.scripting.executeScript({
           target,
-          files: ['libs/highlight.min.js', ...extra, 'render/ui.js', 'render/code.js']
+          files: ['libs/highlight.min.js', ...extra, 'render/ui.js', 'render/sidebar.js', 'render/code.js']
         });
       } else if (msg.kind === 'dirlist') {
         await chrome.scripting.insertCSS({ target, files: ['styles/dirlist.css'] });

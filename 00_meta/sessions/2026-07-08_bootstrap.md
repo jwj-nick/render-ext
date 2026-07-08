@@ -38,11 +38,30 @@
 content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵션 storage / 폴더 뷰 DOM.
 → README 체크리스트 T1~T9.
 
+## 5차 작업 (2026-07-09) — v0.3.0 왼쪽 사이드바
+- **사이드바** (`render/sidebar.js` + `styles/sidebar.css`): 파일 페이지 좌측 패널.
+  - **Files 모드**(file:// 전용): 현재 파일과 같은 폴더 목록 + 상위 폴더. Chrome file://
+    디렉토리 리스팅을 `fetch` → `addRow(...)` 파싱(앵커 폴백). 폴더/렌더가능 문서=같은 탭,
+    **HTML=새 탭(브라우저 렌더)**, 기타=새 탭. 현재 파일 하이라이트.
+  - **Contents 모드**(markdown): h1~h6 TOC + IntersectionObserver 스크롤스파이.
+  - md는 Files/Contents 토글, 코드는 Files만, http(s) 코드파일은 사이드바 없음.
+  - 접기/펼치기(⟨/☰) + 모드·접힘 상태 chrome.storage.local 저장. 옵션에 `sidebar` on/off 추가.
+- **검증**: harness **26/26 PASS**(파이프라인 16 + 사이드바 헬퍼 10). Files/TOC 실렌더는
+  headless Chrome `file://` 스크린샷으로 확인 — 실제 Chrome addRow 리스팅 파싱 end-to-end OK.
+- **배포**: manifest 0.3.0 → make-zip.ps1 → `dist/render-ext-v0.3.0.zip`(1.06MB).
+- 신규 파일: `tests/sidebar_demo.html`(?files 쿼리로 Files 모드 프리뷰). result png는 gitignore.
+
 ## 다음 세션
 1. README 설치 절차대로 Chrome에 로드 (MIME 스크립트 → unpacked 로드 → file URL 액세스 ON)
-2. README 테스트 체크리스트 T1~T9 실행 — 특히 T1(전 기능), T5(대용량), T7(GitHub raw CSP
-   sandbox), T8(폴더 뷰)
+2. README 테스트 체크리스트 **T1~T11** 실행 — T10/T11 사이드바 포함
 3. 발견 이슈 수정 → Web Store 배포 검토 여부 결정
+
+## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
+- 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
+- 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼
+- Markdown: 상대 링크(`./other.md`) 클릭 시 확장이 이어서 렌더(현재 브라우저 기본 동작)
+- mermaid/wavedrom 다이어그램 클릭 확대(zoom)·SVG 저장
+- 파일 상단 메타(경로/크기/수정일) 바, 최근 연 파일 목록(팝업)
 
 ## 4차 작업 (같은 날) — git/배포 체계
 - **git 정리 완료**: init → 첫 커밋 → GitHub **private** repo `jwj-nick/render-ext` 생성+push

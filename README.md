@@ -25,8 +25,10 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 ## 사용
 
 - 대상 파일을 Chrome에서 열면(주소창에 경로 입력 or 드래그) 자동 렌더.
+- **왼쪽 사이드바**: 파일 열면 좌측에 **Files**(같은 폴더 목록 + 상위 폴더 이동)와, Markdown이면
+  **Contents**(목차·스크롤 연동) 탭. 폴더/문서 클릭 시 같은 탭 렌더, **HTML은 새 탭**(브라우저 렌더).
 - 우상단 토글 pill: **Raw ↔ Rendered** 전환, 파일 타입/줄 수 표시.
-- **폴더 뷰** (`file://` 디렉토리): 상단 breadcrumb으로 임의 상위 폴더 점프,
+- **폴더 뷰** (`file://` 디렉토리 페이지): 상단 breadcrumb으로 임의 상위 폴더 점프,
   `/` 키로 파일명 필터, 항목 수 표시.
 - 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 뷰) on/off.
   변경은 새로 여는 탭부터 적용.
@@ -45,6 +47,8 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 | T7 | 아무 GitHub raw URL (예: uvm-drill repo의 .md raw) | http(s) raw에서도 렌더 (CSP sandbox 환경) |
 | T8 | `file:///C:/01_Labs/render-ext/samples/` 폴더 열기 | breadcrumb 상위 이동 · `/` 필터 · 다크모드 |
 | T9 | 툴바 아이콘 팝업에서 기능 off → 새 탭 | off한 기능이 발동 안 함, 다시 on → 복구 |
+| T10 | `feature_test.md` 왼쪽 사이드바 | Files/Contents 탭 · Contents 클릭 시 스크롤 · Files에서 폴더 클릭 이동 · 현재 파일 하이라이트 |
+| T11 | 사이드바 Files에서 `.sv` 클릭 / (있으면) `.html` 클릭 | `.sv`=같은 탭 렌더 · `.html`=새 탭 브라우저 렌더 |
 
 ## 구조
 
@@ -54,8 +58,8 @@ app/                    ← Chrome에 로드하는 디렉토리
 ├── common/registry.js   언어 registry (SSOT) — 언어 추가는 여기 한 곳
 ├── content/detect.js    경량 감지기 (모든 페이지, ~7KB) — storage 설정 확인 후 발동
 ├── sw.js                service worker — 감지 시에만 무거운 렌더러 주입
-├── render/              markdown.js / code.js / dirlist.js(폴더 뷰) / ui.js(토글 툴바)
-├── styles/              base.css / dirlist.css / hljs-theme.css(라이트+다크 결합)
+├── render/              markdown.js / code.js / sidebar.js(Files·TOC) / dirlist.js(폴더 뷰) / ui.js(툴바)
+├── styles/              base.css / sidebar.css / dirlist.css / hljs-theme.css(라이트+다크 결합)
 ├── options/             설정 팝업 겸 옵션 페이지 (chrome.storage.sync)
 ├── icons/               16/32/48/128 PNG (tools/make-icons.ps1로 생성)
 └── libs/                marked·DOMPurify·mermaid·wavedrom·hljs·JSON5 (전부 로컬)
@@ -78,10 +82,10 @@ registry에서 자동 생성하므로 다른 수정 불필요.
 
 - Phase 0 ✅ 리서치 / Phase 1 ✅ Markdown(mermaid+wavedrom) / Phase 2 ✅ Verilog/SV
 - Phase 3 ✅ Python·JSON·YAML·C/C++ + α (JS/TS/Tcl/VHDL/shell/diff…)
-- Phase 4 ✅ 다크모드 자동·on/off 옵션 팝업·아이콘 / +α ✅ 폴더 뷰(breadcrumb·필터)
+- Phase 4 ✅ 다크모드 자동·on/off 옵션 팝업·아이콘 / +α ✅ 폴더 뷰 + **왼쪽 사이드바(Files·TOC, v0.3.0)**
 - 남은 것: Web Store 배포 검토 (배포 시 MIME 스크립트 대체 방안은 `docs/phase0_research.md` 부록)
-- **렌더 파이프라인 검증 완료** (2026-07-08): `tests/harness.html` — 확장과 동일 번들·동일
-  파이프라인을 실Chrome에서 실행, **16/16 PASS** (`tests/harness_result.png`).
-  mermaid·wavedrom·verilog(sv/systemverilog)·python·DOMPurify·콜아웃 실렌더 확인.
+- **검증 완료** (실Chrome, `tests/harness.html` **26/26 PASS**): 렌더 파이프라인(mermaid·wavedrom·
+  verilog·python·DOMPurify·콜아웃) 16 + 사이드바 헬퍼(디렉토리 파싱·경로계산) 10. Files/TOC
+  사이드바는 `file://`에서 헤드리스 스크린샷으로 실렌더 확인(`tests/sidebar_demo.html`).
 - **미검증 (수동 로드 필요):** 확장 플러밍 — content script 자동 주입, SW 주입, MIME/file
   액세스, 옵션 storage, 폴더 뷰. → 위 체크리스트 T1~T9.

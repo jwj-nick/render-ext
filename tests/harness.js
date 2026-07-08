@@ -183,6 +183,38 @@ function t(name, ok, detail) {
     const hl = hljs.highlight(rawV, { language: 'verilog' });
     t('code view: hljs.highlight(verilog) emits markup',
       hl.value.includes('hljs-keyword'));
+
+    // -- 8. sidebar helpers (directory parsing / path math) ---------------
+    t('sidebar: helpers defined',
+      typeof rxParseListing === 'function' && typeof rxParentDir === 'function' &&
+      typeof rxUnescapeJs === 'function' && typeof rxExtOf === 'function');
+
+    const LISTING =
+      '<script>start("/C:/proj/");<\/script>' +
+      '<script>onHasParentDirectory();<\/script>' +
+      '<script>addRow("..","..",1,"","");<\/script>' +
+      '<script>addRow("sub","sub/",1,0,"","2026");<\/script>' +
+      '<script>addRow("readme.md","readme.md",0,120,"120 B","2026");<\/script>' +
+      '<script>addRow("top.sv","top.sv",0,900,"900 B","2026");<\/script>' +
+      '<script>addRow("weird\\x20name.v","weird%20name.v",0,10,"10 B","2026");<\/script>';
+    const parsed = rxParseListing(LISTING);
+    t('sidebar: parses listing, drops "..", keeps 4', parsed.length === 4,
+      'names=' + parsed.map((e) => e.name).join('|'));
+    t('sidebar: folder flagged isDir', parsed[0].name === 'sub' && parsed[0].isDir === true);
+    t('sidebar: file flagged !isDir', parsed[1].name === 'readme.md' && parsed[1].isDir === false);
+    t('sidebar: JS \\x escape unescaped', parsed.some((e) => e.name === 'weird name.v'),
+      'got ' + JSON.stringify(parsed.map((e) => e.name)));
+
+    t('sidebar: parentDir climbs one level',
+      rxParentDir('file:///C:/a/b/') === 'file:///C:/a/');
+    t('sidebar: parentDir of drive -> file:///',
+      rxParentDir('file:///C:/') === 'file:///');
+    t('sidebar: parentDir null at file:///',
+      rxParentDir('file:///') === null);
+    t('sidebar: parentDir null for http',
+      rxParentDir('http://x/y/') === null);
+
+    t('sidebar: rxExtOf', rxExtOf('a/b/Top.SV') === 'sv' && rxExtOf('noext') === '');
   } catch (e) {
     t('UNEXPECTED HARNESS ERROR', false, String(e && e.stack || e));
   }

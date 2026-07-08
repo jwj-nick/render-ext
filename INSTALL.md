@@ -56,9 +56,11 @@ powershell -ExecutionPolicy Bypass -File .\tools\register-mime.ps1
 
 | 기능 | 방법 |
 |---|---|
+| **왼쪽 사이드바** | 파일 열면 좌측에 **Files**(같은 폴더 목록·상위 폴더 이동)와, Markdown이면 **Contents**(목차) 탭. 상단 `⟨`로 접기 |
+| 사이드바에서 이동 | 폴더/렌더 가능한 문서 클릭 → 같은 탭에서 렌더 · **HTML 클릭 → 새 탭에서 브라우저 렌더** · 기타 파일 → 새 탭 |
 | 렌더 ↔ 원문 전환 | 우상단 pill의 **Raw** 버튼 |
-| 폴더 탐색 | `file://` 폴더 열면 breadcrumb(상위 폴더 점프) + `/` 키 파일명 필터 |
-| 기능 on/off | 툴바의 render-ext 아이콘 클릭 → 전체/Markdown/코드/폴더 뷰 개별 토글 |
+| 폴더 페이지 탐색 | `file://` 폴더 열면 breadcrumb(상위 폴더 점프) + `/` 키 파일명 필터 |
+| 기능 on/off | 툴바의 render-ext 아이콘 클릭 → 전체/Markdown/코드/사이드바/폴더 뷰 개별 토글 |
 | 다크모드 | OS 설정 자동 추종 |
 
 지원: Markdown(mermaid·wavedrom·`:::콜아웃`·front matter) / Verilog·SystemVerilog /
