@@ -1,0 +1,15 @@
+# render-ext YAML sample — build config flavor
+project: render-ext
+version: 0.1.0
+targets:
+  - name: markdown
+    libs: [marked, dompurify, mermaid, wavedrom, json5]
+  - name: code
+    libs: [highlight.js]
+languages:
+  verilog:
+    exts: [v, vh, sv, svh]
+    grammar: hljs-verilog
+options:
+  dark_mode: auto
+  editor: false   # read-only by design

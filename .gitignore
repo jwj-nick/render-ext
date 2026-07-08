@@ -1,0 +1,2 @@
+# release artifacts (rebuild with tools/make-zip.ps1)
+dist/

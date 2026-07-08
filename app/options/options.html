@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>render-ext 설정</title>
+<style>
+  body {
+    margin: 0;
+    padding: 16px 18px;
+    min-width: 260px;
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
+    background: #ffffff;
+    color: #24292f;
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 15px;
+  }
+  .sub {
+    margin: 0 0 14px;
+    color: #57606a;
+    font-size: 12px;
+  }
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  label:hover { background: #f6f8fa; }
+  label.master {
+    font-weight: 600;
+    border: 1px solid #d0d7de;
+    margin-bottom: 8px;
+  }
+  .group { margin-left: 10px; }
+  .group.off { opacity: 0.45; pointer-events: none; }
+  input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #0969da;
+  }
+  .note {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #d0d7de;
+    color: #57606a;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #161b22; color: #c9d1d9; }
+    .sub, .note { color: #8b949e; }
+    label:hover { background: #21262d; }
+    label.master { border-color: #30363d; }
+    .note { border-top-color: #30363d; }
+    input[type="checkbox"] { accent-color: #58a6ff; }
+  }
+</style>
+</head>
+<body>
+  <h1>render-ext</h1>
+  <p class="sub">읽기 전용 raw 파일 렌더러</p>
+
+  <label class="master">
+    <input type="checkbox" id="enabled"> 확장 사용 (전체 on/off)
+  </label>
+
+  <div class="group" id="group">
+    <label><input type="checkbox" id="markdown"> Markdown 렌더 (mermaid·wavedrom)</label>
+    <label><input type="checkbox" id="code"> 코드 문법강조 + 줄번호</label>
+    <label><input type="checkbox" id="dirlist"> 폴더 뷰 (breadcrumb·필터)</label>
+  </div>
+
+  <p class="note">
+    변경 사항은 <b>새로 여는 탭</b>부터 적용됩니다 (열린 탭은 새로고침).<br>
+    다크/라이트는 OS 설정을 자동 추종합니다.
+  </p>
+
+  <script src="options.js"></script>
+</body>
+</html>

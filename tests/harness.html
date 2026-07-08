@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>render-ext lib harness</title>
+<!-- exact same bundled files the extension injects -->
+<link rel="stylesheet" href="../app/libs/github-markdown.min.css">
+<link rel="stylesheet" href="../app/styles/hljs-theme.css">
+<link rel="stylesheet" href="../app/styles/base.css">
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; }
+  #results {
+    padding: 16px 32px;
+    border-bottom: 2px solid #d0d7de;
+    background: #f6f8fa;
+    font-size: 14px;
+  }
+  #results h2 { margin: 0 0 10px; font-size: 16px; }
+  #results li { margin: 3px 0; list-style: none; }
+  #results .pass::before { content: "PASS  "; color: #1a7f37; font-weight: 700; }
+  #results .fail::before { content: "FAIL  "; color: #cf222e; font-weight: 700; }
+  #results .detail { color: #57606a; font-size: 12px; }
+  #summary { font-weight: 700; margin-top: 10px; }
+  @media (prefers-color-scheme: dark) {
+    #results { background: #161b22; border-bottom-color: #30363d; color: #c9d1d9; }
+    #results .detail { color: #8b949e; }
+  }
+</style>
+</head>
+<body>
+  <div id="results"><h2>render-ext 라이브러리/파이프라인 하네스</h2><ul id="list"></ul><div id="summary">running…</div></div>
+  <article id="md" class="markdown-body rx-md-root"></article>
+
+  <script src="../app/libs/marked.min.js"></script>
+  <script src="../app/libs/purify.min.js"></script>
+  <script src="../app/libs/json5.min.js"></script>
+  <script src="../app/libs/highlight.min.js"></script>
+  <script src="../app/libs/hljs-verilog.min.js"></script>
+  <script src="../app/libs/hljs-vhdl.min.js"></script>
+  <script src="../app/libs/hljs-tcl.min.js"></script>
+  <script src="../app/libs/wavedrom.min.js"></script>
+  <script src="../app/libs/wavedrom-skin-default.js"></script>
+  <script src="../app/libs/mermaid.min.js"></script>
+  <script src="harness.js"></script>
+</body>
+</html>

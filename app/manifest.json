@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "render-ext — Raw File Renderer",
+  "version": "0.2.0",
+  "description": "Read-only renderer for raw files: Markdown (mermaid + wavedrom), Verilog/SystemVerilog, Python, JSON, YAML, C/C++ and more. All libraries bundled locally (MV3, no CDN).",
+  "permissions": ["scripting", "storage"],
+  "host_permissions": ["file:///*", "http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["file:///*", "http://*/*", "https://*/*"],
+      "js": ["common/registry.js", "content/detect.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "options/options.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": false
+  }
+}

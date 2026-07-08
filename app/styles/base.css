@@ -1,0 +1,224 @@
+/* render-ext base styles — page frame, toolbar, callouts, diagrams, code view.
+   Light/dark follows the OS via prefers-color-scheme (github-markdown-css
+   does the same for the markdown body). */
+
+html.rx-page {
+  background: #ffffff;
+}
+html.rx-page body {
+  margin: 0;
+}
+
+/* ---- markdown view ---------------------------------------------------- */
+.rx-md-root {
+  box-sizing: border-box;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+  min-height: 100vh;
+}
+.markdown-body pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+
+.rx-frontmatter {
+  margin: 0 0 16px;
+  padding: 6px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 85%;
+}
+.rx-frontmatter summary {
+  cursor: pointer;
+  color: #57606a;
+}
+.rx-frontmatter pre {
+  margin: 8px 0 2px;
+}
+
+/* ---- callouts (:::tldr / :::gotcha / :::analogy / generic) ------------ */
+.rx-callout {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-left: 4px solid #0969da;
+  border-radius: 6px;
+  background: rgba(9, 105, 218, 0.08);
+}
+.rx-callout .rx-callout-title {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #0969da;
+}
+.rx-callout > :last-child {
+  margin-bottom: 0;
+}
+.rx-callout-gotcha,
+.rx-callout-warning,
+.rx-callout-danger {
+  border-left-color: #cf222e;
+  background: rgba(207, 34, 46, 0.08);
+}
+.rx-callout-gotcha .rx-callout-title,
+.rx-callout-warning .rx-callout-title,
+.rx-callout-danger .rx-callout-title {
+  color: #cf222e;
+}
+.rx-callout-analogy,
+.rx-callout-tip,
+.rx-callout-note {
+  border-left-color: #1a7f37;
+  background: rgba(26, 127, 55, 0.08);
+}
+.rx-callout-analogy .rx-callout-title,
+.rx-callout-tip .rx-callout-title,
+.rx-callout-note .rx-callout-title {
+  color: #1a7f37;
+}
+
+/* ---- diagrams ---------------------------------------------------------- */
+.rx-diagram {
+  margin: 16px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+/* wavedrom's default skin draws dark text — keep a light chip in dark mode */
+.rx-wavedrom {
+  display: block;
+  padding: 12px;
+  border-radius: 6px;
+  background: #ffffff;
+}
+.rx-diagram-error {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border: 1px solid #cf222e;
+  border-radius: 6px;
+}
+.rx-diagram-error p {
+  margin: 0 0 8px;
+  color: #cf222e;
+  font-weight: 600;
+}
+
+/* unknown fenced language — plain block with a small badge */
+.rx-unknown-fence {
+  position: relative;
+}
+.rx-unknown-fence::before {
+  content: attr(data-rx-lang);
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: #57606a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ---- code view --------------------------------------------------------- */
+.rx-code-root {
+  display: flex;
+  align-items: flex-start;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+.rx-gutter {
+  margin: 0;
+  padding: 16px 12px 16px 16px;
+  text-align: right;
+  color: #8c959f;
+  user-select: none;
+  border-right: 1px solid #d0d7de;
+  position: sticky;
+  left: 0;
+  background: inherit;
+}
+.rx-code {
+  flex: 1;
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  tab-size: 4;
+}
+.rx-code code {
+  display: block;
+  background: transparent;
+  padding: 0;
+}
+html.rx-page-code body,
+.rx-gutter {
+  background: #ffffff;
+}
+
+/* ---- toolbar ------------------------------------------------------------ */
+.rx-toolbar {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 999px;
+  background: rgba(246, 248, 250, 0.92);
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  color: #57606a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.rx-toolbar-btn {
+  border: 1px solid #d0d7de;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: #ffffff;
+  color: #24292f;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rx-toolbar-btn:hover {
+  background: #f3f4f6;
+}
+
+/* ---- dark mode ---------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  html.rx-page {
+    background: #0d1117;
+  }
+  html.rx-page-code body,
+  .rx-gutter {
+    background: #0d1117;
+  }
+  .rx-gutter {
+    color: #6e7681;
+    border-right-color: #30363d;
+  }
+  .rx-frontmatter {
+    border-color: #30363d;
+  }
+  .rx-frontmatter summary {
+    color: #8b949e;
+  }
+  .rx-unknown-fence::before {
+    color: #8b949e;
+  }
+  .rx-toolbar {
+    border-color: #30363d;
+    background: rgba(22, 27, 34, 0.92);
+    color: #8b949e;
+  }
+  .rx-toolbar-btn {
+    border-color: #30363d;
+    background: #21262d;
+    color: #c9d1d9;
+  }
+  .rx-toolbar-btn:hover {
+    background: #30363d;
+  }
+}
