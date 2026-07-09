@@ -36,7 +36,25 @@ const EXTRA_LIB_WHITELIST = new Set(
 );
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (!sender.tab || !msg || msg.action !== 'rx-render') return;
+  if (!sender.tab || !msg) return;
+
+  // Read a directory listing on behalf of a content script. The SW runs with
+  // the extension origin, so (with file access + host_permissions) it can read
+  // file:// where the content script's null origin cannot.
+  if (msg.action === 'rx-listdir') {
+    (async () => {
+      try {
+        const res = await fetch(msg.url);
+        const text = await res.text();
+        sendResponse({ ok: true, text });
+      } catch (e) {
+        sendResponse({ ok: false, error: String(e) });
+      }
+    })();
+    return true; // async sendResponse
+  }
+
+  if (msg.action !== 'rx-render') return;
   const target = { tabId: sender.tab.id };
 
   (async () => {

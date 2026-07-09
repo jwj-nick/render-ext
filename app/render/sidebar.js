@@ -36,10 +36,25 @@ function rxExtOf(name) {
   return m ? m[1] : '';
 }
 
-// file:// must be read with XHR — fetch() throws on the file: scheme inside a
-// content script even when "Allow access to file URLs" is enabled. XHR to a
-// directory returns Chrome's listing HTML (status is 0 on success for file://).
-// fetch() is kept as a fallback for http(s) / other Chrome builds.
+// A content script runs with the PAGE's origin ("null" on file://), so both
+// fetch() and XHR to file:// are blocked by CORS. The service worker runs with
+// the extension origin and can read file:// (host_permissions + file access),
+// so we ask it to fetch the directory listing for us. XHR/fetch are kept only
+// as fallbacks for non-extension contexts (the test harness / demo pages).
+function rxSwListDir(url) {
+  return new Promise((resolve, reject) => {
+    try {
+      chrome.runtime.sendMessage({ action: 'rx-listdir', url }, (res) => {
+        if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+        if (res && res.ok) return resolve(res.text || '');
+        reject(new Error((res && res.error) || 'no response from service worker'));
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
 function rxXhrText(url) {
   return new Promise((resolve, reject) => {
     try {
@@ -56,10 +71,13 @@ function rxXhrText(url) {
 }
 
 async function rxFetchText(url) {
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    return rxSwListDir(url); // extension context — the reliable path
+  }
   try {
-    return await rxXhrText(url);
+    return await rxXhrText(url); // demo/harness fallback
   } catch (e) {
-    const res = await fetch(url); // fallback
+    const res = await fetch(url);
     return await res.text();
   }
 }

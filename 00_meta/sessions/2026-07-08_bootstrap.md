@@ -64,6 +64,19 @@ content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵
 - **수정**: `rxFetchText`를 **XMLHttpRequest 우선**(file:// 표준 방식) + fetch 폴백으로 교체.
   실패 시 콘솔에 실제 에러 로그. → 0.3.1 재배포. **Nick: chrome://extensions에서 확장 새로고침(↻) 필요.**
 
+## 7차 (2026-07-09) — v0.3.2 사이드바 Files 진짜 픽스
+- v0.3.1(XHR)도 실패. Nick 콘솔: `Access to fetch at 'file:///C:/01_Labs/' from origin 'null'
+  blocked by CORS` — **콘텐츠 스크립트는 페이지 origin(file://=null)으로 동작**해서 fetch·XHR
+  둘 다 file:// 차단됨(MV3에서 콘텐츠 스크립트가 확장 CORS 특권 상실).
+- **정답 = 서비스 워커 경유**: SW는 확장 origin이라 host_permissions(`file:///*`)+파일액세스로
+  file:// 읽기 가능(웹검색으로 확인: extension pages/SW는 CORS 우회). sidebar가
+  `chrome.runtime.sendMessage({action:'rx-listdir'})` → sw.js가 fetch→text 반환. XHR/fetch는
+  데모/harness용 폴백으로만 유지.
+- 변경: `app/render/sidebar.js`(rxFetchText→SW 메시지 우선), `app/sw.js`(rx-listdir 핸들러 추가).
+  → 0.3.2 재배포. **Nick: 확장 새로고침(↻) 후 재확인.**
+- ⚠️ 미검증 리스크: SW의 file:// 디렉토리 fetch 실제 동작은 실확장 로드로만 확인 가능(harness
+  범위 밖). 안 되면 콘솔 `[render-ext] directory load failed` + SW 콘솔 로그로 진단.
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼
