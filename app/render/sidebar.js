@@ -36,6 +36,34 @@ function rxExtOf(name) {
   return m ? m[1] : '';
 }
 
+// file:// must be read with XHR — fetch() throws on the file: scheme inside a
+// content script even when "Allow access to file URLs" is enabled. XHR to a
+// directory returns Chrome's listing HTML (status is 0 on success for file://).
+// fetch() is kept as a fallback for http(s) / other Chrome builds.
+function rxXhrText(url) {
+  return new Promise((resolve, reject) => {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', url);
+      xhr.responseType = 'text';
+      xhr.onload = () => resolve(xhr.responseText || '');
+      xhr.onerror = () => reject(new Error('XHR failed for ' + url));
+      xhr.send();
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+async function rxFetchText(url) {
+  try {
+    return await rxXhrText(url);
+  } catch (e) {
+    const res = await fetch(url); // fallback
+    return await res.text();
+  }
+}
+
 // Chrome's file:// listing embeds addRow("name","url",isDir,…) script calls.
 // Parse those; fall back to <a href> anchors for other listing formats.
 function rxParseListing(html) {
@@ -180,12 +208,12 @@ async function rxRenderFiles(container) {
 
   let text;
   try {
-    const res = await fetch(dirUrl);
-    text = await res.text();
+    text = await rxFetchText(dirUrl);
   } catch (e) {
+    console.warn('[render-ext] directory load failed:', e);
     container.appendChild(
-      rxHint('폴더 목록을 불러올 수 없습니다. chrome://extensions 에서 render-ext의 ' +
-             '“파일 URL에 대한 액세스 허용”이 켜져 있는지 확인하세요.')
+      rxHint('폴더 목록을 불러오지 못했습니다. chrome://extensions 에서 render-ext의 ' +
+             '“파일 URL에 대한 액세스 허용”이 켜져 있어야 합니다.')
     );
     return;
   }

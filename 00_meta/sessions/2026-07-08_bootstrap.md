@@ -56,6 +56,14 @@ content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵
 2. README 테스트 체크리스트 **T1~T11** 실행 — T10/T11 사이드바 포함
 3. 발견 이슈 수정 → Web Store 배포 검토 여부 결정
 
+## 6차 (2026-07-09) — v0.3.1 사이드바 Files 버그픽스
+- **증상**: Nick 실사용 시 사이드바 Files가 “폴더 목록을 불러올 수 없습니다” 계속(파일 액세스는
+  ON, md·목차는 정상). → Files fetch만 실패.
+- **원인**: `fetch()`는 content script(isolated world)에서 `file:` 스킴을 못 읽고 throw.
+  headless 데모는 페이지 메인월드+`--allow-file-access-from-files`라 우연히 통과했던 것(실확장과 다름).
+- **수정**: `rxFetchText`를 **XMLHttpRequest 우선**(file:// 표준 방식) + fetch 폴백으로 교체.
+  실패 시 콘솔에 실제 에러 로그. → 0.3.1 재배포. **Nick: chrome://extensions에서 확장 새로고침(↻) 필요.**
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼
