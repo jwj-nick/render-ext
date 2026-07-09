@@ -99,6 +99,19 @@ content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵
   ⚠️ 남은 미검증: SW rx-fetch의 file:// 읽기(격리월드↔SW)만 실확장 로드로 최종확인.
 - 배포: 0.4.0 zip + release. **Nick: 확장 새로고침(↻) 필수.**
 
+## 9차 (2026-07-09) — v0.4.1 폴더 네비 슬래시 버그
+- **증상**(Nick): 사이드바로 폴더 따라가면 `C:/idea/migration`→`C:/ideamigration`,
+  `.../idea/x.md`→`.../ideax.md`로 **슬래시가 빠져** "Failed to fetch". 폴더 항목 url에 끝
+  슬래시 없을 때 `dir + e.url` 문자열 결합이 깨짐(다음 hop부터 base가 슬래시 잃음).
+- **부수 확인**: 에러가 SW의 `String(e)`에서 왔고 첫 목록은 정상 → **SW file:// 읽기는 동작**
+  (그간 미검증이던 부분 해소). 유일 버그는 URL 결합.
+- **수정**: `rxChildUrl(dir, entry)` — 슬래시로 끝나는 base에 `new URL()`로 resolve, 디렉토리
+  결과는 끝 슬래시 보장. showDir는 dir 정규화. fileRow가 이걸 사용.
+- **검증**: harness **32/32**(childUrl 6종 추가 — "folder WITHOUT trailing slash gets one"이
+  정확히 그 버그). `app_demo.html?nav`로 root→app 폴더 클릭 실네비게이션 스크린샷 →
+  `C:/01_Labs/render-ext/app` 슬래시 정상 + 뷰어 유지 확인.
+- 배포 0.4.1. **Nick: 확장 새로고침(↻).**
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼

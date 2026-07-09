@@ -215,6 +215,21 @@ function t(name, ok, detail) {
       rxParentDir('http://x/y/') === null);
 
     t('sidebar: rxExtOf', rxExtOf('a/b/Top.SV') === 'sv' && rxExtOf('noext') === '');
+
+    // -- 9. rxChildUrl (the slash-drop bug: dir + entry -> absolute URL) ---
+    t('childUrl: folder with trailing slash',
+      rxChildUrl('file:///C:/idea/', { url: 'migration/', isDir: true }) === 'file:///C:/idea/migration/');
+    t('childUrl: folder WITHOUT trailing slash gets one',
+      rxChildUrl('file:///C:/idea/', { url: 'migration', isDir: true }) === 'file:///C:/idea/migration/');
+    t('childUrl: file keeps the separating slash',
+      rxChildUrl('file:///C:/idea/', { url: '2026-06-27_ai-build-lab-plan.md', isDir: false }) ===
+        'file:///C:/idea/2026-06-27_ai-build-lab-plan.md');
+    t('childUrl: base missing slash is normalized',
+      rxChildUrl('file:///C:/idea', { url: '2026.md', isDir: false }) === 'file:///C:/idea/2026.md');
+    t('childUrl: encoded space preserved',
+      rxChildUrl('file:///C:/my%20dir/', { url: 'a%20b.md', isDir: false }) === 'file:///C:/my%20dir/a%20b.md');
+    t('childUrl: parent (up) passed through',
+      rxChildUrl('file:///C:/idea/migration/', { up: true, url: 'file:///C:/idea/' }) === 'file:///C:/idea/');
   } catch (e) {
     t('UNEXPECTED HARNESS ERROR', false, String(e && e.stack || e));
   }

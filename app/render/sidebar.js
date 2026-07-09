@@ -31,6 +31,24 @@ function rxExtOf(name) {
   return m ? m[1] : '';
 }
 
+// Resolve a listing entry to an absolute URL. String concatenation loses slashes
+// when a folder entry has no trailing "/" (dir "…/idea/" + "migration" would give
+// "…/ideamigration" on the next hop) — resolve against a slash-terminated base
+// with new URL(), and make sure directory results keep a trailing slash so the
+// next level resolves correctly too.
+function rxChildUrl(dir, entry) {
+  if (entry.up) return entry.url; // already absolute (parent link)
+  const base = dir.endsWith('/') ? dir : dir + '/';
+  let full;
+  try {
+    full = new URL(entry.url, base).href;
+  } catch (e) {
+    full = base + entry.url;
+  }
+  if (entry.isDir && !full.endsWith('/')) full += '/';
+  return full;
+}
+
 function rxParseListing(html) {
   const out = [];
   const re = /addRow\("((?:[^"\\]|\\.)*)","((?:[^"\\]|\\.)*)",\s*(true|false|1|0)/g;
@@ -175,7 +193,7 @@ function rxCreateSidebar(opts) {
   function fileRow(e, dir) {
     const li = document.createElement('li');
     li.className = 'rx-sb-file ' + (e.isDir ? 'rx-sb-dir' : 'rx-sb-doc');
-    const full = e.up ? e.url : dir + e.url;
+    const full = rxChildUrl(dir, e);
     li.dataset.url = full;
 
     const a = document.createElement('a');
@@ -207,6 +225,7 @@ function rxCreateSidebar(opts) {
   }
 
   async function showDir(dir, active) {
+    if (dir && !dir.endsWith('/')) dir += '/'; // a dir URL must end with '/'
     dirUrl = dir;
     activeFileUrl = active || activeFileUrl;
     setMode('files');

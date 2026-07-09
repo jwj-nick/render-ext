@@ -29,6 +29,7 @@
   <script src="../app/render/sidebar.js"></script>
   <script src="../app/render/app.js"></script>
   <script>
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     (async () => {
       rxApp.mount();
       const base = 'file:///C:/01_Labs/render-ext/samples/';
@@ -36,7 +37,16 @@
       if (q.includes('err')) await rxApp.openFile(base + 'this_file_does_not_exist.md');
       else if (q.includes('file')) await rxApp.openFile(base + 'feature_test.md');
       else if (q.includes('code')) await rxApp.openFile(base + 'axi_arbiter.sv');
-      else rxApp.openDir(base);
+      else if (q.includes('nav')) {
+        // multi-level navigation: open the repo root, then click a subfolder.
+        // Proves rxChildUrl builds correct URLs across hops (the slash bug).
+        rxApp.openDir('file:///C:/01_Labs/render-ext/');
+        await sleep(900);
+        const link = [...document.querySelectorAll('.rx-sb-dir .rx-sb-link')]
+          .find((a) => a.textContent.includes('app'));
+        if (link) link.click();
+        await sleep(1400);
+      } else rxApp.openDir(base);
     })();
   </script>
 </body>
