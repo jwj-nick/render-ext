@@ -24,31 +24,34 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 
 ## 사용
 
-- 대상 파일을 Chrome에서 열면(주소창에 경로 입력 or 드래그) 자동 렌더.
-- **왼쪽 사이드바**: 파일 열면 좌측에 **Files**(같은 폴더 목록 + 상위 폴더 이동)와, Markdown이면
-  **Contents**(목차·스크롤 연동) 탭. 폴더/문서 클릭 시 같은 탭 렌더, **HTML은 새 탭**(브라우저 렌더).
-- 우상단 토글 pill: **Raw ↔ Rendered** 전환, 파일 타입/줄 수 표시.
-- **폴더 뷰** (`file://` 디렉토리 페이지): 상단 breadcrumb으로 임의 상위 폴더 점프,
-  `/` 키로 파일명 필터, 항목 수 표시.
-- 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 뷰) on/off.
+- 대상 파일/폴더를 Chrome에서 열면(주소창에 경로 입력 or 드래그) **뷰어 셸**로 전환.
+- **지속 셸 구조** (v0.4.0): 왼쪽 사이드바는 항상 유지, 오른쪽은 **마지막으로 성공한 파일**을 표시.
+  - 사이드바 **Files**: 같은 폴더 목록 + 상위 폴더. **폴더 클릭 = 목록만 갱신**(뷰어 유지),
+    **파일 클릭 = 그 자리에서 렌더**(페이지 이동 없음). HTML은 새 탭(브라우저 렌더).
+  - 사이드바 **Contents**: Markdown 목차 + 스크롤 연동. Markdown이면 Files/Contents 토글, 그 외 Files만.
+  - 폴더를 열었는데 아직 연 파일이 없으면 오른쪽은 비어 있음. 없는 파일/렌더 실패 시 사이드바는
+    유지되고 오른쪽에 실패 메시지 표시.
+- 우상단 pill: **Raw ↔ Rendered** 전환, 파일 타입/줄 수.
+- 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 열기) on/off.
   변경은 새로 여는 탭부터 적용.
 - 다크/라이트: OS 설정 자동 추종.
 
 ## 테스트 체크리스트 (`samples/`, 전부 실파일)
 
-| # | 파일 | 확인 사항 |
+| # | 시나리오 | 확인 사항 |
 |---|---|---|
-| T1 | `feature_test.md` | front matter 접힘·`:::` 콜아웃·mermaid 2종·**의도된 mermaid 오류 1종**(에러 박스)·wavedrom·SV/Python 강조·```check 뱃지·표·상대 링크 |
-| T2 | `uvm_class-hierarchy.md` | 실전 uvm-drill 챕터 (mermaid 포함) |
-| T3 | `axi_arbiter.sv` / `axi_arbiter_tb.sv` | SystemVerilog 문법강조 + 줄번호 |
-| T4 | `NV_NVDLA_cmac.v` (44KB) / `NV_NVDLA_CMAC_CORE_mac.v` (400KB) | 실전 NVDLA RTL 강조 |
-| T5 | `perf_test_2MB.v` (2.1MB) | 대용량 → 강조 자동 OFF("large file" 표시) + 줄번호는 유지 |
-| T6 | `uvm_manifest.json` / `sample.yaml` | JSON·YAML 강조 |
-| T7 | 아무 GitHub raw URL (예: uvm-drill repo의 .md raw) | http(s) raw에서도 렌더 (CSP sandbox 환경) |
-| T8 | `file:///C:/01_Labs/render-ext/samples/` 폴더 열기 | breadcrumb 상위 이동 · `/` 필터 · 다크모드 |
-| T9 | 툴바 아이콘 팝업에서 기능 off → 새 탭 | off한 기능이 발동 안 함, 다시 on → 복구 |
-| T10 | `feature_test.md` 왼쪽 사이드바 | Files/Contents 탭 · Contents 클릭 시 스크롤 · Files에서 폴더 클릭 이동 · 현재 파일 하이라이트 |
-| T11 | 사이드바 Files에서 `.sv` 클릭 / (있으면) `.html` 클릭 | `.sv`=같은 탭 렌더 · `.html`=새 탭 브라우저 렌더 |
+| T1 | `feature_test.md` 열기 | front matter 접힘·`:::` 콜아웃·mermaid 2종·**의도된 mermaid 오류 1종**(에러 박스)·wavedrom·SV/Python 강조·```check 뱃지·표 |
+| T2 | `axi_arbiter.sv` 열기 | SystemVerilog 강조 + 줄번호 (사이드바 Files만) |
+| T3 | `perf_test_2MB.v` (2.1MB) | 대용량 → 강조 자동 OFF("large file") + 줄번호 유지 |
+| T4 | `NV_NVDLA_cmac.v` / `uvm_manifest.json` / `sample.yaml` | NVDLA RTL·JSON·YAML 강조 |
+| T5 | **폴더 열기** `file:///C:/01_Labs/render-ext/samples/` | 사이드바에 목록, 오른쪽 "파일을 선택하세요" |
+| T6 | ★ **사이드바에서 폴더 클릭** (상위 폴더/하위 폴더) | 왼쪽 목록만 갱신, **오른쪽 뷰어 그대로 유지**(페이지 이동 X) |
+| T7 | ★ **사이드바에서 다른 파일 클릭** | 오른쪽이 그 파일로 교체, 현재 파일 하이라이트 이동 |
+| T8 | `feature_test.md`에서 Contents 탭 | 목차 클릭 시 스크롤, 스크롤 시 활성 항목 이동 |
+| T9 | 사이드바에서 `.html` 클릭 | 새 탭에서 브라우저가 렌더 (뷰어는 그대로) |
+| T10 | 없는 파일/깨진 경로로 이동 | 사이드바 유지 + 오른쪽 "파일을 찾거나 렌더링하지 못했습니다" |
+| T11 | 아무 GitHub raw `.md` URL | http(s) raw에서도 렌더 (Files 없이 Contents만) |
+| T12 | 툴바 아이콘 팝업 기능 off → 새 탭 | off한 기능 발동 안 함, 다시 on → 복구 |
 
 ## 구조
 
@@ -56,10 +59,14 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 app/                    ← Chrome에 로드하는 디렉토리
 ├── manifest.json        MV3
 ├── common/registry.js   언어 registry (SSOT) — 언어 추가는 여기 한 곳
-├── content/detect.js    경량 감지기 (모든 페이지, ~7KB) — storage 설정 확인 후 발동
-├── sw.js                service worker — 감지 시에만 무거운 렌더러 주입
-├── render/              markdown.js / code.js / sidebar.js(Files·TOC) / dirlist.js(폴더 뷰) / ui.js(툴바)
-├── styles/              base.css / sidebar.css / dirlist.css / hljs-theme.css(라이트+다크 결합)
+├── content/detect.js    경량 감지기 (모든 페이지) — 파일/폴더 감지 → SW에 앱 주입 요청
+├── sw.js                service worker — 앱 번들 주입 + rx-fetch(file:// 읽기 대행)
+├── render/
+│   ├── app.js            뷰어 셸 컨트롤러 (사이드바+콘텐츠, 파일/폴더 열기, 에러)
+│   ├── sidebar.js        사이드바 (Files 네비게이터 + Contents 목차) + 디렉토리 파싱 헬퍼
+│   ├── render-md.js      rxRenderMarkdown / rxRenderDiagrams (마크다운→노드, mermaid·wavedrom)
+│   └── render-code.js    rxRenderCode (코드→노드, hljs+줄번호)
+├── styles/              base.css / sidebar.css / hljs-theme.css(라이트+다크 결합)
 ├── options/             설정 팝업 겸 옵션 페이지 (chrome.storage.sync)
 ├── icons/               16/32/48/128 PNG (tools/make-icons.ps1로 생성)
 └── libs/                marked·DOMPurify·mermaid·wavedrom·hljs·JSON5 (전부 로컬)
@@ -67,7 +74,8 @@ INSTALL.md               설치 가이드 SSOT (zip에 동봉)
 tools/register-mime.ps1  Windows MIME 등록 (1회)
 tools/make-icons.ps1     아이콘 재생성
 tools/make-zip.ps1       릴리스 zip 빌드 → dist/
-tests/harness.html       라이브러리/파이프라인 자가 검증 (16항목)
+tests/harness.html       라이브러리/파이프라인 자가 검증 (26항목)
+tests/app_demo.html      뷰어 셸 자가 검증 (?file/?code/?err/디렉토리)
 samples/                 실파일 테스트 세트
 docs/phase0_research.md  Phase 0 리서치 결론
 ```
@@ -75,17 +83,18 @@ docs/phase0_research.md  Phase 0 리서치 결론
 ## 언어 추가 방법
 
 `app/common/registry.js`의 `languages`에 항목 추가. hljs common 번들에 없는 문법이면
-grammar 파일을 `app/libs/`에 받고 `extraLibs`에 경로 기입 → `sw.js`가 whitelist를
-registry에서 자동 생성하므로 다른 수정 불필요.
+grammar 파일을 `app/libs/`에 받고 `extraLibs`에 경로 기입 후 `sw.js`의 `APP_JS`에 추가.
 
 ## 상태
 
-- Phase 0 ✅ 리서치 / Phase 1 ✅ Markdown(mermaid+wavedrom) / Phase 2 ✅ Verilog/SV
-- Phase 3 ✅ Python·JSON·YAML·C/C++ + α (JS/TS/Tcl/VHDL/shell/diff…)
-- Phase 4 ✅ 다크모드 자동·on/off 옵션 팝업·아이콘 / +α ✅ 폴더 뷰 + **왼쪽 사이드바(Files·TOC, v0.3.0)**
-- 남은 것: Web Store 배포 검토 (배포 시 MIME 스크립트 대체 방안은 `docs/phase0_research.md` 부록)
-- **검증 완료** (실Chrome, `tests/harness.html` **26/26 PASS**): 렌더 파이프라인(mermaid·wavedrom·
-  verilog·python·DOMPurify·콜아웃) 16 + 사이드바 헬퍼(디렉토리 파싱·경로계산) 10. Files/TOC
-  사이드바는 `file://`에서 헤드리스 스크린샷으로 실렌더 확인(`tests/sidebar_demo.html`).
-- **미검증 (수동 로드 필요):** 확장 플러밍 — content script 자동 주입, SW 주입, MIME/file
-  액세스, 옵션 storage, 폴더 뷰. → 위 체크리스트 T1~T9.
+- Phase 0~3 ✅ 리서치 + Markdown(mermaid+wavedrom) + Verilog/SV + Python·JSON·YAML·C/C++ +α
+- Phase 4 ✅ 다크모드·옵션 팝업·아이콘
+- **v0.4.0 ✅ 지속 뷰어 셸**: 왼쪽 사이드바 고정 + 오른쪽 in-place 렌더. 폴더 이동해도 뷰어
+  유지, 파일 선택 시 그 자리에서 교체, 실패 시 사이드바 유지+메시지. (아키텍처=내장 뷰어
+  컨트롤러 `render/app.js` — SW가 file:// 읽기 대행, 클릭 가로채 네비게이션 대신 in-place 갱신)
+- 남은 것: Web Store 배포 검토 (MIME 스크립트 대체 방안은 `docs/phase0_research.md` 부록)
+- **검증 완료** (실Chrome): `tests/harness.html` **26/26 PASS**(파이프라인 16 + 사이드바 헬퍼 10);
+  `tests/app_demo.html` 헤드리스로 셸 4상태 실렌더 확인 — Markdown(mermaid·wavedrom·hljs),
+  코드(SV 강조+줄번호), 디렉토리(사이드바+빈 뷰어), 에러(사이드바 유지+실패 메시지).
+- **미검증 (수동 로드 필요):** SW rx-fetch의 file:// 읽기(격리월드↔SW 메시징)는 실확장 로드로만
+  최종 확인. 안 되면 페이지 콘솔 `[render-ext]` + SW 콘솔 로그로 진단. → 체크리스트 T1~T11.

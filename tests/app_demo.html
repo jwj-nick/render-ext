@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>render-ext app shell demo</title>
+<link rel="stylesheet" href="../app/libs/github-markdown.min.css">
+<link rel="stylesheet" href="../app/styles/hljs-theme.css">
+<link rel="stylesheet" href="../app/styles/sidebar.css">
+<link rel="stylesheet" href="../app/styles/base.css">
+</head>
+<body>
+  <!-- Open via file:// (headless: --allow-file-access-from-files). Drives the
+       real rxApp controller; rxFetchText falls back to XHR in this non-ext page.
+       ?file  -> open feature_test.md   ?err -> open a missing file
+       (default) -> open the samples/ directory with an empty viewer -->
+  <script src="../app/libs/marked.min.js"></script>
+  <script src="../app/libs/purify.min.js"></script>
+  <script src="../app/libs/json5.min.js"></script>
+  <script src="../app/libs/highlight.min.js"></script>
+  <script src="../app/libs/hljs-verilog.min.js"></script>
+  <script src="../app/libs/hljs-vhdl.min.js"></script>
+  <script src="../app/libs/hljs-tcl.min.js"></script>
+  <script src="../app/libs/wavedrom.min.js"></script>
+  <script src="../app/libs/wavedrom-skin-default.js"></script>
+  <script src="../app/libs/mermaid.min.js"></script>
+  <script src="../app/common/registry.js"></script>
+  <script src="../app/render/render-md.js"></script>
+  <script src="../app/render/render-code.js"></script>
+  <script src="../app/render/sidebar.js"></script>
+  <script src="../app/render/app.js"></script>
+  <script>
+    (async () => {
+      rxApp.mount();
+      const base = 'file:///C:/01_Labs/render-ext/samples/';
+      const q = location.search;
+      if (q.includes('err')) await rxApp.openFile(base + 'this_file_does_not_exist.md');
+      else if (q.includes('file')) await rxApp.openFile(base + 'feature_test.md');
+      else if (q.includes('code')) await rxApp.openFile(base + 'axi_arbiter.sv');
+      else rxApp.openDir(base);
+    })();
+  </script>
+</body>
+</html>

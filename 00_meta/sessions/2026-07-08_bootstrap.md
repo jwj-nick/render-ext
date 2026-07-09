@@ -77,6 +77,28 @@ content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵
 - ⚠️ 미검증 리스크: SW의 file:// 디렉토리 fetch 실제 동작은 실확장 로드로만 확인 가능(harness
   범위 밖). 안 되면 콘솔 `[render-ext] directory load failed` + SW 콘솔 로그로 진단.
 
+## 8차 (2026-07-09) — v0.4.0 지속 뷰어 셸 (대규모 리팩터링)
+- **문제**: 사이드바에서 폴더 클릭 시 브라우저가 실제 이동→Chrome 기본 디렉토리 화면, 뷰어 소실.
+  Nick 요구: 왼쪽 사이드바 항상 유지 / 오른쪽=마지막 성공 파일 / 폴더이동=목록만 갱신 /
+  파일선택=in-place 교체 / 실패해도 사이드바 유지+메시지.
+- **해결 = 내장 뷰어 컨트롤러(SPA-in-page)**. phase0 부록의 "구조적 해결" 실제 구현.
+  - `render/app.js`(신규): 셸(사이드바+`.rx-content`) 소유. openFile/openDir/openInitial/showError.
+    사이드바 클릭을 **가로채(preventDefault)** 네비 대신 in-place: 폴더→목록만, 파일→SW로 읽어
+    렌더 교체. HTML/비렌더=새 탭. 실패→메시지(사이드바 유지).
+  - `render/render-md.js`·`render-code.js`(신규): 마크다운/코드를 **document.body 안 건드리고 노드 반환**하는
+    순수 함수로 분리. `rxRenderMarkdown`+`rxRenderDiagrams`(분리 핵심, 아래).
+  - `render/sidebar.js`(재작성): `rxCreateSidebar({onOpenFile,onOpenDir})` 콜백형. 순수 헬퍼 유지.
+  - `sw.js`(재작성): `rx-fetch`(file:// 읽기 대행) + `rx-render`(앱 번들 주입). detect.js: 파일/폴더
+    감지→앱 주입. **삭제**: markdown.js·code.js·dirlist.js·ui.js·dirlist.css(앱으로 흡수).
+  - 옵션 `sidebar` 토글 제거(이제 뷰어 핵심). `dirlist`=폴더 열기로 레이블 변경.
+- **잡은 버그(자체검증 중)**: 다이어그램을 attach 전 렌더 → mermaid/wavedrom "null getAttribute/childNodes".
+  → `rxRenderDiagrams`를 분리해 **app이 contentSet(node) 후 호출**(attach 후 측정). 해결 확인.
+- **검증**: harness **26/26 유지**. `tests/app_demo.html`로 셸 4상태 헤드리스 실렌더 확인:
+  ?file(mermaid·wavedrom·SV 전부 렌더), ?code(SV+줄번호), 디렉토리(사이드바+빈 뷰어),
+  ?err(사이드바 유지+"파일을 찾거나 렌더링하지 못했습니다"+경로+이유). 스크린샷 저장(gitignore).
+  ⚠️ 남은 미검증: SW rx-fetch의 file:// 읽기(격리월드↔SW)만 실확장 로드로 최종확인.
+- 배포: 0.4.0 zip + release. **Nick: 확장 새로고침(↻) 필수.**
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼

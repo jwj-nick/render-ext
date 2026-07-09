@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "render-ext — Raw File Renderer",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Read-only renderer for raw files: Markdown (mermaid + wavedrom), Verilog/SystemVerilog, Python, JSON, YAML, C/C++ and more. All libraries bundled locally (MV3, no CDN).",
   "permissions": ["scripting", "storage"],
   "host_permissions": ["file:///*", "http://*/*", "https://*/*"],

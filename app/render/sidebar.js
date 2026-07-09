@@ -1,12 +1,8 @@
-// render-ext left sidebar — directory navigator + markdown TOC.
-// Injected before render/markdown.js and render/code.js. Each renderer calls
-// rxMountSidebar({kind, tocRoot}) after it finishes.
-//
-//   Files mode (file:// only): siblings of the current file + parent folder.
-//     - folder / renderable doc  -> same tab (extension re-renders)
-//     - .html / .htm & anything else -> new tab (browser renders / downloads)
-//   Contents mode (markdown only): TOC from h1..h6 with scroll-spy.
-//   Code files get Files only; http(s) markdown gets Contents only.
+// render-ext left sidebar — persistent directory navigator + markdown TOC.
+// rxCreateSidebar({onOpenFile, onOpenDir}) returns a controller the app drives.
+// Folder / renderable-file clicks are intercepted (no navigation) and routed to
+// the callbacks so the viewer shell stays put. .html and other files keep a
+// real link (open in a new tab; the browser renders / downloads them).
 'use strict';
 
 // ---- pure helpers (also unit-tested by tests/harness.js) ----------------
@@ -21,11 +17,10 @@ function rxUnescapeJs(s) {
   }
 }
 
-// parent of a file:// dir url ("…/a/b/" -> "…/a/"); null at the top.
 function rxParentDir(dir) {
   if (!/^file:\/\/\//.test(dir)) return null;
   const noslash = dir.replace(/\/+$/, '');
-  if (noslash === 'file://') return null; // dir was file:///
+  if (noslash === 'file://') return null;
   const idx = noslash.lastIndexOf('/');
   const p = noslash.slice(0, idx + 1);
   return p.length >= 8 ? p : null; // 'file:///'.length === 8
@@ -36,15 +31,36 @@ function rxExtOf(name) {
   return m ? m[1] : '';
 }
 
-// A content script runs with the PAGE's origin ("null" on file://), so both
-// fetch() and XHR to file:// are blocked by CORS. The service worker runs with
-// the extension origin and can read file:// (host_permissions + file access),
-// so we ask it to fetch the directory listing for us. XHR/fetch are kept only
-// as fallbacks for non-extension contexts (the test harness / demo pages).
-function rxSwListDir(url) {
+function rxParseListing(html) {
+  const out = [];
+  const re = /addRow\("((?:[^"\\]|\\.)*)","((?:[^"\\]|\\.)*)",\s*(true|false|1|0)/g;
+  let m;
+  while ((m = re.exec(html))) {
+    const name = rxUnescapeJs(m[1]);
+    if (name === '..' || name === '.' || name === '') continue;
+    out.push({ name, url: m[2], isDir: m[3] === 'true' || m[3] === '1' });
+  }
+  if (!out.length) {
+    try {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a[href]').forEach((a) => {
+        const href = a.getAttribute('href');
+        const name = a.textContent.trim();
+        if (!href || href[0] === '?' || !name || name === '..' || name === '.') return;
+        out.push({ name, url: href, isDir: href.endsWith('/') });
+      });
+    } catch (e) {}
+  }
+  return out;
+}
+
+// A content script's origin is null on file://, so it cannot fetch/XHR file://.
+// The service worker (extension origin + file access) can, so route through it.
+// XHR/fetch stay as fallbacks for non-extension contexts (harness/demo).
+function rxSwFetch(url) {
   return new Promise((resolve, reject) => {
     try {
-      chrome.runtime.sendMessage({ action: 'rx-listdir', url }, (res) => {
+      chrome.runtime.sendMessage({ action: 'rx-fetch', url }, (res) => {
         if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
         if (res && res.ok) return resolve(res.text || '');
         reject(new Error((res && res.error) || 'no response from service worker'));
@@ -72,73 +88,26 @@ function rxXhrText(url) {
 
 async function rxFetchText(url) {
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-    return rxSwListDir(url); // extension context — the reliable path
+    return rxSwFetch(url);
   }
   try {
-    return await rxXhrText(url); // demo/harness fallback
+    return await rxXhrText(url);
   } catch (e) {
     const res = await fetch(url);
     return await res.text();
   }
 }
 
-// Chrome's file:// listing embeds addRow("name","url",isDir,…) script calls.
-// Parse those; fall back to <a href> anchors for other listing formats.
-function rxParseListing(html) {
-  const out = [];
-  const re = /addRow\("((?:[^"\\]|\\.)*)","((?:[^"\\]|\\.)*)",\s*(true|false|1|0)/g;
-  let m;
-  while ((m = re.exec(html))) {
-    const name = rxUnescapeJs(m[1]);
-    if (name === '..' || name === '.' || name === '') continue;
-    out.push({ name, url: m[2], isDir: m[3] === 'true' || m[3] === '1' });
-  }
-  if (!out.length) {
-    try {
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('a[href]').forEach((a) => {
-        const href = a.getAttribute('href');
-        const name = a.textContent.trim();
-        if (!href || href[0] === '?' || !name || name === '..' || name === '.') return;
-        out.push({ name, url: href, isDir: href.endsWith('/') });
-      });
-    } catch (e) {}
-  }
-  return out;
-}
+// ---- sidebar controller --------------------------------------------------
 
-// ---- mount ---------------------------------------------------------------
-
-function rxMountSidebar(opts) {
-  if (window.__rxSidebarMounted) return;
-  try {
-    chrome.storage.sync.get({ sidebar: true }, (cfg) => {
-      if (cfg.sidebar) rxMountSidebarNow(opts);
-    });
-  } catch (e) {
-    rxMountSidebarNow(opts); // non-extension context (harness/demo)
-  }
-}
-
-function rxMountSidebarNow(opts) {
-  if (window.__rxSidebarMounted) return;
-
-  const kind = opts.kind;
-  const tocRoot = opts.tocRoot;
+function rxCreateSidebar(opts) {
+  const onOpenFile = opts.onOpenFile;
+  const onOpenDir = opts.onOpenDir;
   const canFiles = location.protocol === 'file:';
-  const heads = tocRoot
-    ? [...tocRoot.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => h.id)
-    : [];
-  const canToc = kind === 'markdown' && heads.length >= 1;
-  if (!canFiles && !canToc) return; // nothing to show (e.g. http code file)
-  window.__rxSidebarMounted = true;
-
-  const modes = [];
-  if (canFiles) modes.push('files');
-  if (canToc) modes.push('toc');
 
   const aside = document.createElement('aside');
   aside.className = 'rx-sidebar';
+
   const head = document.createElement('div');
   head.className = 'rx-sb-head';
   const tabsEl = document.createElement('div');
@@ -148,8 +117,15 @@ function rxMountSidebarNow(opts) {
   collapseBtn.title = '사이드바 접기';
   collapseBtn.textContent = '⟨';
   head.append(tabsEl, collapseBtn);
+
   const bodyEl = document.createElement('div');
   bodyEl.className = 'rx-sb-body';
+
+  const filesPanel = document.createElement('div');
+  filesPanel.className = 'rx-sb-panel';
+  const tocPanel = document.createElement('div');
+  tocPanel.className = 'rx-sb-panel';
+  bodyEl.append(filesPanel, tocPanel);
   aside.append(head, bodyEl);
 
   const reveal = document.createElement('button');
@@ -157,8 +133,36 @@ function rxMountSidebarNow(opts) {
   reveal.title = '사이드바 열기';
   reveal.textContent = '☰';
 
-  document.body.append(aside, reveal);
-  document.documentElement.classList.add('rx-has-sidebar');
+  const filesTab = document.createElement('button');
+  filesTab.className = 'rx-sb-tab';
+  filesTab.textContent = 'Files';
+  const tocTab = document.createElement('button');
+  tocTab.className = 'rx-sb-tab';
+  tocTab.textContent = 'Contents';
+  if (canFiles) tabsEl.append(filesTab);
+  tabsEl.append(tocTab);
+  tocTab.style.display = 'none';
+
+  let mode = canFiles ? 'files' : 'toc';
+  let hasToc = false;
+  let dirUrl = null;
+  let activeFileUrl = null;
+
+  function applyMode() {
+    filesPanel.style.display = mode === 'files' ? '' : 'none';
+    tocPanel.style.display = mode === 'toc' ? '' : 'none';
+    filesTab.classList.toggle('active', mode === 'files');
+    tocTab.classList.toggle('active', mode === 'toc');
+    try { chrome.storage.local.set({ sidebarMode: mode }); } catch (e) {}
+  }
+  function setMode(m) {
+    if (m === 'files' && !canFiles) return;
+    if (m === 'toc' && !hasToc) return;
+    mode = m;
+    applyMode();
+  }
+  filesTab.addEventListener('click', () => setMode('files'));
+  tocTab.addEventListener('click', () => setMode('toc'));
 
   function setCollapsed(c) {
     document.documentElement.classList.toggle('rx-sb-collapsed', c);
@@ -167,162 +171,143 @@ function rxMountSidebarNow(opts) {
   collapseBtn.addEventListener('click', () => setCollapsed(true));
   reveal.addEventListener('click', () => setCollapsed(false));
 
-  const panels = {};
-  function show(mode) {
-    for (const k of modes) {
-      panels[k].el.style.display = k === mode ? '' : 'none';
-      if (panels[k].btn) panels[k].btn.classList.toggle('active', k === mode);
-    }
-    try { chrome.storage.local.set({ sidebarMode: mode }); } catch (e) {}
-  }
+  // ---- Files panel ----
+  function fileRow(e, dir) {
+    const li = document.createElement('li');
+    li.className = 'rx-sb-file ' + (e.isDir ? 'rx-sb-dir' : 'rx-sb-doc');
+    const full = e.up ? e.url : dir + e.url;
+    li.dataset.url = full;
 
-  for (const mode of modes) {
-    const panel = document.createElement('div');
-    panel.className = 'rx-sb-panel';
-    bodyEl.appendChild(panel);
-    panels[mode] = { el: panel };
-    if (modes.length > 1) {
-      const btn = document.createElement('button');
-      btn.className = 'rx-sb-tab';
-      btn.textContent = mode === 'files' ? 'Files' : 'Contents';
-      btn.addEventListener('click', () => show(mode));
-      tabsEl.appendChild(btn);
-      panels[mode].btn = btn;
+    const a = document.createElement('a');
+    a.className = 'rx-sb-link';
+    a.href = full;
+
+    const ext = e.isDir ? '' : rxExtOf(e.name);
+    const isHtml = ext === 'html' || ext === 'htm';
+    const renderable = !e.isDir && typeof rxLookupExt === 'function' && !!rxLookupExt(ext);
+
+    if (e.isDir) {
+      a.addEventListener('click', (ev) => { ev.preventDefault(); onOpenDir(full); });
+    } else if (isHtml || !renderable) {
+      a.target = '_blank'; // browser renders / downloads in a new tab
     } else {
-      const title = document.createElement('span');
-      title.className = 'rx-sb-title';
-      title.textContent = mode === 'files' ? 'Files' : 'Contents';
-      tabsEl.appendChild(title);
+      a.addEventListener('click', (ev) => { ev.preventDefault(); onOpenFile(full); });
     }
+
+    const icon = document.createElement('span');
+    icon.className = 'rx-sb-icon';
+    icon.textContent = e.up ? '⬆' : e.isDir ? '📁' : isHtml ? '🌐' : renderable ? '📄' : '·';
+    const label = document.createElement('span');
+    label.className = 'rx-sb-name';
+    label.textContent = e.up ? '상위 폴더' : e.name;
+
+    a.append(icon, label);
+    li.appendChild(a);
+    return li;
   }
 
-  if (canFiles) rxRenderFiles(panels.files.el);
-  if (canToc) rxRenderToc(panels.toc.el, heads);
+  async function showDir(dir, active) {
+    dirUrl = dir;
+    activeFileUrl = active || activeFileUrl;
+    setMode('files');
+    filesPanel.replaceChildren();
 
-  const fallback = canToc ? 'toc' : 'files';
+    const label = document.createElement('div');
+    label.className = 'rx-sb-dirlabel';
+    label.textContent = decodeURIComponent(dir).replace(/^file:\/\/\//, '').replace(/\/$/, '') || dir;
+    label.title = label.textContent;
+    filesPanel.appendChild(label);
+
+    const list = document.createElement('ul');
+    list.className = 'rx-sb-files';
+    filesPanel.appendChild(list);
+
+    const parent = rxParentDir(dir);
+    if (parent) list.appendChild(fileRow({ name: '..', url: parent, isDir: true, up: true }, dir));
+
+    let text;
+    try {
+      text = await rxFetchText(dir);
+    } catch (e) {
+      console.warn('[render-ext] directory load failed:', e);
+      filesPanel.appendChild(rxHint('폴더 목록을 불러오지 못했습니다: ' + (e && e.message ? e.message : e)));
+      return;
+    }
+    const entries = rxParseListing(text);
+    entries.sort((a, b) => (b.isDir - a.isDir) || a.name.localeCompare(b.name));
+    for (const e of entries) list.appendChild(fileRow(e, dir));
+    if (!entries.length) filesPanel.appendChild(rxHint('(빈 폴더)'));
+    setActiveFile(activeFileUrl);
+  }
+
+  function setActiveFile(url) {
+    activeFileUrl = url;
+    let cur = null;
+    for (const li of filesPanel.querySelectorAll('.rx-sb-file')) {
+      const on = url && li.dataset.url &&
+        decodeURIComponent(li.dataset.url) === decodeURIComponent(url);
+      li.classList.toggle('rx-sb-current', !!on);
+      if (on) cur = li;
+    }
+    if (cur) cur.scrollIntoView({ block: 'nearest' });
+  }
+
+  // ---- Contents (TOC) panel ----
+  function showToc(headings) {
+    tocPanel.replaceChildren();
+    hasToc = headings && headings.length > 0;
+    tocTab.style.display = hasToc ? '' : 'none';
+    if (!hasToc) {
+      if (mode === 'toc') setMode('files');
+      return;
+    }
+    const ul = document.createElement('ul');
+    ul.className = 'rx-toc';
+    const links = new Map();
+    const minLvl = Math.min(...headings.map((h) => +h.tagName[1]));
+    for (const h of headings) {
+      const li = document.createElement('li');
+      li.className = 'rx-toc-item';
+      li.style.paddingLeft = (+h.tagName[1] - minLvl) * 12 + 'px';
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      a.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      li.appendChild(a);
+      ul.appendChild(li);
+      links.set(h.id, a);
+    }
+    tocPanel.appendChild(ul);
+
+    let activeId = null;
+    const obs = new IntersectionObserver(
+      (ents) => {
+        for (const en of ents) {
+          if (!en.isIntersecting) continue;
+          if (activeId && links.get(activeId)) links.get(activeId).classList.remove('active');
+          activeId = en.target.id;
+          const a = links.get(activeId);
+          if (a) { a.classList.add('active'); a.scrollIntoView({ block: 'nearest' }); }
+        }
+      },
+      { rootMargin: '0px 0px -80% 0px', threshold: 0 }
+    );
+    headings.forEach((h) => obs.observe(h));
+  }
+
+  // restore persisted UI state
   try {
     chrome.storage.local.get({ sidebarMode: null, sidebarCollapsed: false }, (st) => {
-      show(modes.includes(st.sidebarMode) ? st.sidebarMode : fallback);
+      if (st.sidebarMode === 'files' && canFiles) setMode('files');
       if (st.sidebarCollapsed) setCollapsed(true);
     });
-  } catch (e) {
-    show(fallback);
-  }
-}
+  } catch (e) {}
 
-// ---- Files panel ---------------------------------------------------------
-
-async function rxRenderFiles(container) {
-  const href = location.href;
-  const dirUrl = href.slice(0, href.lastIndexOf('/') + 1);
-  const curName = decodeURIComponent(href.slice(dirUrl.length).split(/[?#]/)[0]);
-
-  const list = document.createElement('ul');
-  list.className = 'rx-sb-files';
-  container.appendChild(list);
-
-  const parent = rxParentDir(dirUrl);
-  if (parent) list.appendChild(rxFileRow({ name: '..', url: parent, isDir: true, up: true }, dirUrl));
-
-  let text;
-  try {
-    text = await rxFetchText(dirUrl);
-  } catch (e) {
-    console.warn('[render-ext] directory load failed:', e);
-    container.appendChild(
-      rxHint('폴더 목록을 불러오지 못했습니다. chrome://extensions 에서 render-ext의 ' +
-             '“파일 URL에 대한 액세스 허용”이 켜져 있어야 합니다.')
-    );
-    return;
-  }
-
-  const entries = rxParseListing(text);
-  entries.sort((a, b) => (b.isDir - a.isDir) || a.name.localeCompare(b.name));
-
-  let curRow = null;
-  for (const e of entries) {
-    const row = rxFileRow(e, dirUrl);
-    if (!e.isDir && decodeURIComponent(e.url) === curName) {
-      row.classList.add('rx-sb-current');
-      curRow = row;
-    }
-    list.appendChild(row);
-  }
-  if (!entries.length) container.appendChild(rxHint('(빈 폴더)'));
-  if (curRow) curRow.scrollIntoView({ block: 'center' });
-}
-
-function rxFileRow(e, dirUrl) {
-  const li = document.createElement('li');
-  li.className = 'rx-sb-file ' + (e.isDir ? 'rx-sb-dir' : 'rx-sb-doc');
-
-  const a = document.createElement('a');
-  a.className = 'rx-sb-link';
-  a.href = e.up ? e.url : dirUrl + e.url;
-
-  const ext = e.isDir ? '' : rxExtOf(e.name);
-  const isHtml = ext === 'html' || ext === 'htm';
-  const renderable = !e.isDir && typeof rxLookupExt === 'function' && !!rxLookupExt(ext);
-  // same tab: folders + files we can render. new tab: html + everything else.
-  if (!e.isDir && (isHtml || !renderable)) a.target = '_blank';
-
-  const icon = document.createElement('span');
-  icon.className = 'rx-sb-icon';
-  icon.textContent = e.up ? '⬆' : e.isDir ? '📁' : isHtml ? '🌐' : renderable ? '📄' : '·';
-
-  const label = document.createElement('span');
-  label.className = 'rx-sb-name';
-  label.textContent = e.up ? '상위 폴더' : e.name;
-
-  a.append(icon, label);
-  li.appendChild(a);
-  return li;
-}
-
-// ---- Contents (TOC) panel ------------------------------------------------
-
-function rxRenderToc(container, heads) {
-  const ul = document.createElement('ul');
-  ul.className = 'rx-toc';
-  const links = new Map();
-  const minLvl = Math.min(...heads.map((h) => +h.tagName[1]));
-
-  for (const h of heads) {
-    const li = document.createElement('li');
-    li.className = 'rx-toc-item';
-    li.style.paddingLeft = (+h.tagName[1] - minLvl) * 12 + 'px';
-    const a = document.createElement('a');
-    a.href = '#' + h.id;
-    a.textContent = h.textContent;
-    a.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.replaceState(null, '', '#' + h.id);
-    });
-    li.appendChild(a);
-    ul.appendChild(li);
-    links.set(h.id, a);
-  }
-  container.appendChild(ul);
-
-  // scroll-spy: highlight the heading nearest the top of the viewport
-  let activeId = null;
-  const obs = new IntersectionObserver(
-    (ents) => {
-      for (const en of ents) {
-        if (!en.isIntersecting) continue;
-        if (activeId && links.get(activeId)) links.get(activeId).classList.remove('active');
-        activeId = en.target.id;
-        const a = links.get(activeId);
-        if (a) {
-          a.classList.add('active');
-          a.scrollIntoView({ block: 'nearest' });
-        }
-      }
-    },
-    { rootMargin: '0px 0px -80% 0px', threshold: 0 }
-  );
-  heads.forEach((h) => obs.observe(h));
+  applyMode();
+  return { el: aside, reveal, showDir, showToc, setActiveFile };
 }
 
 function rxHint(msg) {

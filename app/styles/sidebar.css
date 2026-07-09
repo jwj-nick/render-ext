@@ -2,13 +2,12 @@
 
 :root { --rx-sb-w: 272px; }
 
-/* push rendered content right to make room for the fixed sidebar */
-html.rx-has-sidebar .rx-md-root,
-html.rx-has-sidebar .rx-code-root {
+/* push the viewer content right to make room for the fixed sidebar */
+html.rx-has-sidebar .rx-content {
   margin-left: var(--rx-sb-w);
+  min-height: 100vh;
 }
-html.rx-has-sidebar.rx-sb-collapsed .rx-md-root,
-html.rx-has-sidebar.rx-sb-collapsed .rx-code-root {
+html.rx-has-sidebar.rx-sb-collapsed .rx-content {
   margin-left: 0;
 }
 
@@ -100,6 +99,17 @@ html.rx-sb-collapsed .rx-sb-reveal { display: block; }
 }
 .rx-sb-panel { padding: 0 6px; }
 
+.rx-sb-dirlabel {
+  padding: 2px 8px 8px;
+  font-size: 11px;
+  color: #57606a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;      /* keep the tail (current folder) visible when truncated */
+  text-align: left;
+}
+
 /* ---- Files list -------------------------------------------------------- */
 .rx-sb-files {
   list-style: none;
@@ -165,8 +175,7 @@ html.rx-sb-collapsed .rx-sb-reveal { display: block; }
 @media (max-width: 720px) {
   :root { --rx-sb-w: 240px; }
   .rx-sidebar { box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15); }
-  html.rx-has-sidebar .rx-md-root,
-  html.rx-has-sidebar .rx-code-root { margin-left: 0; }
+  html.rx-has-sidebar .rx-content { margin-left: 0; }
 }
 
 /* ---- dark mode --------------------------------------------------------- */
@@ -185,6 +194,7 @@ html.rx-sb-collapsed .rx-sb-reveal { display: block; }
     color: #c9d1d9;
   }
   .rx-sb-title { color: #8b949e; }
+  .rx-sb-dirlabel { color: #8b949e; }
   .rx-sb-collapse,
   .rx-sb-reveal {
     border-color: #30363d;

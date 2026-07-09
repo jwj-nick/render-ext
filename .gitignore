@@ -3,3 +3,4 @@ dist/
 
 # test evidence screenshots (regenerate via headless chrome)
 tests/*_result.png
+tests/app_*.png
