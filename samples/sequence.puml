@@ -1,0 +1,12 @@
+@startuml
+title CSB register write
+participant Host
+participant CSB
+participant "CMAC regfile" as REG
+
+Host -> CSB: csb_valid, addr=0x10, wdat
+CSB -> REG: write enable
+REG --> CSB: ready
+CSB --> Host: csb_ready
+note right of REG: write takes 1 cycle\nno wait states
+@enduml

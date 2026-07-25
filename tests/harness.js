@@ -335,6 +335,61 @@ function t(name, ok, detail) {
     } catch (e) {
       t('hwp: legacy binary rejected with a message', /구형 바이너리/.test(e.message), e.message);
     }
+
+    // -- 14. standalone diagrams (phase 3) ---------------------------------
+    t('registry: diagram kinds',
+      rxLookupExt('dot').kind === 'dot' && rxLookupExt('gv').kind === 'dot' &&
+      rxLookupExt('mmd').kind === 'mermaid' && rxLookupExt('wd').kind === 'wavedrom' &&
+      rxLookupExt('drawio').kind === 'drawio' && rxLookupExt('puml').kind === 'plantuml');
+
+    // graphviz (harness runs the WASM engine directly; the extension uses the SW)
+    try {
+      const g = await rxRenderDot('digraph { a -> b; b -> c; }', { file: 't.dot' });
+      const svgEl = g.node.querySelector('svg');
+      t('graphviz: dot -> svg', !!svgEl, svgEl ? 'svg present' : 'no svg');
+      t('graphviz: node labels rendered',
+        /a[\s\S]*b[\s\S]*c/.test(g.node.textContent), JSON.stringify(g.node.textContent.trim().slice(0, 40)));
+    } catch (e) {
+      t('graphviz: dot -> svg', false, String(e));
+    }
+
+    // draw.io: plain XML and compressed payloads must both decode
+    const DIO_PLAIN = `<mxfile><diagram id="d"><mxGraphModel><root>
+      <mxCell id="0"/><mxCell id="1" parent="0"/>
+      <mxCell id="n1" value="Alpha" style="rounded=1;fillColor=#ddf4ff;" vertex="1" parent="1">
+        <mxGeometry x="10" y="10" width="100" height="40" as="geometry"/></mxCell>
+      <mxCell id="n2" value="Beta" style="shape=ellipse;" vertex="1" parent="1">
+        <mxGeometry x="200" y="10" width="100" height="40" as="geometry"/></mxCell>
+      <mxCell id="e1" value="link" edge="1" parent="1" source="n1" target="n2">
+        <mxGeometry as="geometry"/></mxCell>
+      </root></mxGraphModel></diagram></mxfile>`;
+    const dio = rxRenderDrawio(DIO_PLAIN, { file: 'x.drawio' });
+    t('drawio: shapes and edges counted', /2 shapes \/ 1 edges/.test(dio.note), dio.note);
+    t('drawio: rect + ellipse emitted',
+      !!dio.node.querySelector('svg rect') && !!dio.node.querySelector('svg ellipse'));
+    t('drawio: labels emitted',
+      /Alpha/.test(dio.node.textContent) && /Beta/.test(dio.node.textContent));
+    t('drawio: edge polyline with arrow',
+      !!dio.node.querySelector('svg polyline[marker-end]'));
+
+    // compressed variant: deflateRaw + base64 + URL-encoding, like drawio saves
+    const inner = DIO_PLAIN.match(/<mxGraphModel>[\s\S]*<\/mxGraphModel>/)[0];
+    const deflated = pako.deflateRaw(new TextEncoder().encode(encodeURIComponent(inner)));
+    let b64 = '';
+    for (const byte of deflated) b64 += String.fromCharCode(byte);
+    const compressed = '<mxfile><diagram id="d">' + btoa(b64) + '</diagram></mxfile>';
+    const dio2 = rxRenderDrawio(compressed, { file: 'y.drawio' });
+    t('drawio: compressed payload decoded', /2 shapes/.test(dio2.note), dio2.note);
+
+    // plantuml: encoder + the opt-in gate
+    const pumlOff = rxRenderPlantuml('@startuml\nA -> B\n@enduml', { file: 'a.puml' }, false);
+    t('plantuml: off by default shows source, no button',
+      !pumlOff.node.querySelector('button') && /설정에서/.test(pumlOff.node.textContent));
+    const pumlOn = rxRenderPlantuml('@startuml\nA -> B\n@enduml', { file: 'a.puml' }, true);
+    t('plantuml: opt-in shows an explicit send button',
+      !!pumlOn.node.querySelector('button') && /plantuml\.com/.test(pumlOn.node.textContent));
+    t('plantuml: encoder emits the custom alphabet',
+      /^[0-9A-Za-z_-]+$/.test(rxPlantumlEncode('@startuml\nA -> B\n@enduml')));
   } catch (e) {
     t('UNEXPECTED HARNESS ERROR', false, String(e && e.stack || e));
   }

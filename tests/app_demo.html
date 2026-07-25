@@ -28,8 +28,11 @@
   <script src="../app/render/render-code.js"></script>
   <script src="../app/libs/mammoth.browser.min.js"></script>
   <script src="../app/libs/xlsx.full.min.js"></script>
+  <script src="../app/libs/pako.min.js"></script>
+  <script src="../app/libs/viz-standalone.js"></script>
   <script src="../app/render/render-media.js"></script>
   <script src="../app/render/render-doc.js"></script>
+  <script src="../app/render/render-diagram.js"></script>
   <script src="../app/render/sidebar.js"></script>
   <script src="../app/render/app.js"></script>
   <script>
@@ -51,6 +54,11 @@
       else if (q.includes('xlsx')) await rxApp.openFile(base + 'metrics.xlsx');
       else if (q.includes('pptx')) await rxApp.openFile(base + 'review_deck.pptx');
       else if (q.includes('nb')) await rxApp.openFile(base + 'analysis.ipynb');
+      else if (q.includes('dot')) await rxApp.openFile(base + 'pipeline.dot');
+      else if (q.includes('mmd')) await rxApp.openFile(base + 'flow.mmd');
+      else if (q.includes('wd')) await rxApp.openFile(base + 'handshake.wd');
+      else if (q.includes('dio')) await rxApp.openFile(base + 'arch.drawio');
+      else if (q.includes('puml')) await rxApp.openFile(base + 'sequence.puml');
       else if (q.includes('nav')) {
         // multi-level navigation: open the repo root, then click a subfolder.
         // Proves rxChildUrl builds correct URLs across hops (the slash bug).

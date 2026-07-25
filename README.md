@@ -49,9 +49,15 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 | **Excel** | `.xlsx .xlsm .xls` | 시트 탭 + 표 (SheetJS) |
 | **PowerPoint** | `.pptx` | 슬라이드별 텍스트 (레이아웃 미지원) |
 | **Jupyter** | `.ipynb` | 마크다운(mermaid 포함)·코드 강조·출력(텍스트/이미지/HTML표)·ANSI traceback |
+| **Graphviz** | `.dot .gv` | 로컬 WASM 렌더 (서비스 워커에서 실행) |
+| **Mermaid** | `.mmd .mermaid` | 단독 파일 렌더 |
+| **WaveDrom** | `.wd .wavejson` | 타이밍 다이어그램 |
+| **draw.io** | `.drawio .dio` | 도형·엣지·라벨 단순 렌더 (압축 페이로드 해제 지원) |
+| **PlantUML** | `.puml .plantuml` | ⚠️ 로컬 엔진 없음 — **기본은 소스만**. 설정에서 허용 시 버튼 클릭으로만 서버 렌더 |
 | HTML | `.html` | 확장 비관여 — 새 탭에서 브라우저가 렌더 |
-- 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 열기) on/off.
-  변경은 새로 여는 탭부터 적용.
+
+- 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 열기) on/off +
+  PlantUML 서버 렌더 허용(기본 꺼짐). 변경은 새로 여는 탭부터 적용.
 - 다크/라이트: OS 설정 자동 추종.
 
 ## 테스트 체크리스트 (`samples/`, 전부 실파일)
@@ -85,7 +91,8 @@ app/                    ← Chrome에 로드하는 디렉토리
 │   ├── render-md.js      rxRenderMarkdown / rxRenderDiagrams (마크다운→노드, mermaid·wavedrom)
 │   ├── render-code.js    rxRenderCode (코드→노드, hljs+줄번호)
 │   ├── render-media.js   이미지·SVG·PDF·CSV표·ANSI로그 (+ CSV/ANSI 파서)
-│   └── render-doc.js     HWPX·docx·xlsx·pptx·ipynb
+│   ├── render-doc.js     HWPX·docx·xlsx·pptx·ipynb
+│   └── render-diagram.js graphviz·mermaid·wavedrom·drawio·plantuml
 ├── libs/hwpx/           hwpx-tool 벤더링 (VENDOR.md 참조 — 원본 그대로, 재동기화 가능)
 ├── styles/              base.css / sidebar.css / hljs-theme.css(라이트+다크 결합)
 ├── options/             설정 팝업 겸 옵션 페이지 (chrome.storage.sync)
@@ -95,8 +102,8 @@ INSTALL.md               설치 가이드 SSOT (zip에 동봉)
 tools/register-mime.ps1  Windows MIME 등록 (1회)
 tools/make-icons.ps1     아이콘 재생성
 tools/make-zip.ps1       릴리스 zip 빌드 → dist/
-tests/harness.html       라이브러리/파이프라인 자가 검증 (26항목)
-tests/app_demo.html      뷰어 셸 자가 검증 (?file/?code/?err/디렉토리)
+tests/harness.html       자가 검증 하네스 (78항목: 파이프라인·파서·문서·다이어그램)
+tests/app_demo.html      뷰어 셸 자가 검증 (?file ?code ?csv ?log ?hwpx ?docx ?dot ?dio …)
 samples/                 실파일 테스트 세트
 docs/phase0_research.md  Phase 0 리서치 결론
 ```
@@ -110,12 +117,14 @@ grammar 파일을 `app/libs/`에 받고 `extraLibs`에 경로 기입 후 `sw.js`
 
 - Phase 0~3 ✅ 리서치 + Markdown(mermaid+wavedrom) + Verilog/SV + Python·JSON·YAML·C/C++ +α
 - Phase 4 ✅ 다크모드·옵션 팝업·아이콘
+- **v0.5~0.7 ✅ 포맷 확장 3단계**: 미디어/데이터 → HWPX·Office·Jupyter → 다이어그램 (위 표)
 - **v0.4.0 ✅ 지속 뷰어 셸**: 왼쪽 사이드바 고정 + 오른쪽 in-place 렌더. 폴더 이동해도 뷰어
   유지, 파일 선택 시 그 자리에서 교체, 실패 시 사이드바 유지+메시지. (아키텍처=내장 뷰어
   컨트롤러 `render/app.js` — SW가 file:// 읽기 대행, 클릭 가로채 네비게이션 대신 in-place 갱신)
 - 남은 것: Web Store 배포 검토 (MIME 스크립트 대체 방안은 `docs/phase0_research.md` 부록)
-- **검증 완료** (실Chrome): `tests/harness.html` **26/26 PASS**(파이프라인 16 + 사이드바 헬퍼 10);
+- **검증 완료** (실Chrome): `tests/harness.html` **78/78 PASS**;
   `tests/app_demo.html` 헤드리스로 셸 4상태 실렌더 확인 — Markdown(mermaid·wavedrom·hljs),
   코드(SV 강조+줄번호), 디렉토리(사이드바+빈 뷰어), 에러(사이드바 유지+실패 메시지).
-- **미검증 (수동 로드 필요):** SW rx-fetch의 file:// 읽기(격리월드↔SW 메시징)는 실확장 로드로만
-  최종 확인. 안 되면 페이지 콘솔 `[render-ext]` + SW 콘솔 로그로 진단. → 체크리스트 T1~T11.
+  전 포맷(이미지·SVG·CSV·로그·HWPX·docx·xlsx·pptx·ipynb·dot·drawio·wd·puml) 실렌더 스크린샷 확인.
+- **미검증 (수동 로드 필요):** 서비스워커 경유 경로(file:// 읽기, Graphviz WASM)는 실확장
+  로드로만 최종 확인. 안 되면 페이지 콘솔 `[render-ext]` + SW 콘솔 로그로 진단.

@@ -1,0 +1,22 @@
+digraph nvdla_pipeline {
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#ddf4ff", color="#0969da", fontname="Helvetica"];
+  edge [color="#57606a", fontname="Helvetica", fontsize=10];
+
+  CDMA  [label="CDMA\n(conv DMA)"];
+  CBUF  [label="CBUF", shape=cylinder, fillcolor="#fff8c5", color="#9a6700"];
+  CMAC  [label="CMAC\n(MAC array)"];
+  CACC  [label="CACC\n(accumulator)"];
+  SDP   [label="SDP", fillcolor="#dafbe1", color="#1a7f37"];
+  PDP   [label="PDP", fillcolor="#dafbe1", color="#1a7f37"];
+  MEM   [label="DRAM", shape=cylinder, fillcolor="#eaeef2", color="#57606a"];
+
+  MEM -> CDMA [label="weights/act"];
+  CDMA -> CBUF;
+  CBUF -> CMAC [label="tiles"];
+  CMAC -> CACC [label="partial sums"];
+  CACC -> SDP  [label="int32"];
+  SDP -> PDP;
+  PDP -> MEM   [label="writeback"];
+  SDP -> MEM   [style=dashed, label="bypass"];
+}

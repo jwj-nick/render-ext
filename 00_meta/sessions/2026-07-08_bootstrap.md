@@ -160,6 +160,23 @@ Nick 지시: VCD 제외 전 포맷 추가, hwpx-tool 통합, 3단계로 나눠 �
 - 신규 샘플: sample.hwpx(hwpx-tool 합성본) · design_note.docx · metrics.xlsx · review_deck.pptx ·
   analysis.ipynb + 생성기 `tools/make-office-samples.ps1`.
 
+### v0.7.0 (P3) — 단독 다이어그램 (graphviz·mermaid·wavedrom·drawio·plantuml)
+- `render/render-diagram.js` 신규. registry에 dot/gv·mmd·wd·drawio·puml 추가.
+- **Graphviz**: `@viz-js/viz` standalone(WASM 인라인, 외부 fetch 없음). **서비스 워커에서 실행** —
+  MV3에서 WASM은 extension_pages CSP(`'wasm-unsafe-eval'`, manifest에 선언)가 필요한데 콘텐츠
+  스크립트의 WASM 취급은 불명확 → SW가 dot→SVG 문자열로 변환해 반환(page는 DOM만 다룸).
+- **draw.io**: mxfile 디코드(base64+**raw deflate**+URL인코딩, pako) → mxGraphModel 파싱 →
+  자체 SVG 렌더(rect/ellipse/rhombus, fill/stroke/rounded, 엣지 waypoint·dashed·라벨,
+  박스 경계 클리핑 화살표). 완전 재현 아님(단순 렌더 명시).
+  - 잡은 버그: 바운딩 박스를 노드만으로 계산 → waypoint 우회 엣지가 캔버스 밖으로 잘림. pts 포함으로 수정.
+- **mermaid/wavedrom 단독 파일**: 기존 rxRenderDiagrams 재사용(attach 후 렌더).
+- **PlantUML**: 로컬 엔진 부재(Java 필요) → **기본 소스만 표시**. 옵션 `plantuml`(기본 false)를
+  켠 뒤 **다이어그램마다 버튼 클릭**해야 서버 전송. 서버 URL을 화면에 명시. 인코더는 PlantUML
+  전용 base64 알파벳 + deflateRaw 자체 구현.
+- 검증: harness **78/78**(신규 11). 실렌더 5종 스크린샷 정상(NVDLA dot 파이프라인, drawio NPU
+  블록도, AXI wavedrom, mermaid 플로우, PlantUML 옵트인 게이트).
+- 신규 샘플: pipeline.dot · flow.mmd · handshake.wd · arch.drawio · sequence.puml.
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼

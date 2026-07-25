@@ -1,0 +1,51 @@
+<mxfile host="render-ext" version="22.0.0">
+  <diagram name="NPU top" id="npu-top">
+    <mxGraphModel dx="900" dy="600" grid="0" page="1" pageWidth="850" pageHeight="1100">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="host" value="Host CPU" style="rounded=1;fillColor=#eaeef2;strokeColor=#57606a;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="csb" value="CSB&#10;register bus" style="rounded=1;fillColor=#fff8c5;strokeColor=#9a6700;" vertex="1" parent="1">
+          <mxGeometry x="260" y="40" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="ctrl" value="Sequencer" style="shape=rhombus;fillColor=#fbefff;strokeColor=#8250df;" vertex="1" parent="1">
+          <mxGeometry x="470" y="30" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="mac" value="MAC array&#10;16x16" style="rounded=1;fillColor=#ddf4ff;strokeColor=#0969da;" vertex="1" parent="1">
+          <mxGeometry x="260" y="200" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="acc" value="Accumulator" style="rounded=1;fillColor=#dafbe1;strokeColor=#1a7f37;" vertex="1" parent="1">
+          <mxGeometry x="470" y="205" width="150" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="dram" value="DRAM" style="shape=ellipse;fillColor=#ffebe9;strokeColor=#cf222e;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=none;strokeColor=#57606a;" edge="1" parent="1" source="host" target="csb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="config" style="edgeStyle=none;strokeColor=#57606a;" edge="1" parent="1" source="csb" target="ctrl">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="tiles" style="edgeStyle=none;strokeColor=#57606a;" edge="1" parent="1" source="dram" target="mac">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="psum" style="edgeStyle=none;strokeColor=#57606a;" edge="1" parent="1" source="mac" target="acc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="start" style="edgeStyle=none;strokeColor=#57606a;dashed=1;" edge="1" parent="1" source="ctrl" target="mac">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="writeback" style="edgeStyle=none;strokeColor=#57606a;dashed=1;" edge="1" parent="1" source="acc" target="dram">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="545" y="340"/>
+              <mxPoint x="110" y="340"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

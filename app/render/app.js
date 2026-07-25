@@ -9,7 +9,14 @@ window.rxApp = (() => {
   let sidebar = null;
   let content = null;
   let toolbar = null;
-  const state = { dirUrl: null, fileUrl: null, rawText: null, renderedNode: null, showingRaw: false };
+  const state = {
+    dirUrl: null, fileUrl: null, rawText: null, renderedNode: null, showingRaw: false,
+    allowPlantuml: false  // PlantUML rendering leaves the machine — opt-in only
+  };
+
+  try {
+    chrome.storage.sync.get({ plantuml: false }, (cfg) => { state.allowPlantuml = !!cfg.plantuml; });
+  } catch (e) {}
 
   function classify(url, hintSpec) {
     const file = decodeURIComponent((url.split('/').pop() || '').split(/[?#]/)[0]);
@@ -136,9 +143,16 @@ window.rxApp = (() => {
       else if (spec.kind === 'docx') out = await rxRenderDocx(rxB64ToBytes(payload.b64), spec);
       else if (spec.kind === 'xlsx') out = rxRenderXlsx(rxB64ToBytes(payload.b64), spec);
       else if (spec.kind === 'pptx') out = await rxRenderPptx(rxB64ToBytes(payload.b64), spec);
+      else if (spec.kind === 'dot') out = await rxRenderDot(payload, spec);
+      else if (spec.kind === 'mermaid') out = rxRenderMermaidFile(payload, spec);
+      else if (spec.kind === 'wavedrom') out = rxRenderWaveFile(payload, spec);
+      else if (spec.kind === 'drawio') out = rxRenderDrawio(payload, spec);
+      else if (spec.kind === 'plantuml') out = rxRenderPlantuml(payload, spec, state.allowPlantuml);
       else out = rxRenderCode(payload, spec);
       state.renderedNode = out.node;
       contentSet(out.node);
+      // standalone mermaid/wavedrom files need a live node to measure
+      if (spec.kind === 'mermaid' || spec.kind === 'wavedrom') await rxRenderDiagrams(out.node);
       if (out.title && spec.kind !== 'image' && spec.kind !== 'pdf') document.title = out.title;
     }
 

@@ -1,0 +1,10 @@
+flowchart TD
+    A[RTL source] --> B{lint clean?}
+    B -- no --> C[fix violations]
+    C --> A
+    B -- yes --> D[synthesis]
+    D --> E{timing met?}
+    E -- no --> F[retime / resize]
+    F --> D
+    E -- yes --> G[place & route]
+    G --> H[sign-off]

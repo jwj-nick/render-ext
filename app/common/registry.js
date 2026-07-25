@@ -27,7 +27,14 @@ const RX_REGISTRY = {
     docx:  { exts: ['docx'], label: 'Word', binary: true, icon: '📘' },
     xlsx:  { exts: ['xlsx', 'xlsm', 'xls'], label: 'Excel', binary: true, icon: '📗' },
     pptx:  { exts: ['pptx'], label: 'PowerPoint', binary: true, icon: '📙' },
-    notebook: { exts: ['ipynb'], label: 'Jupyter', icon: '📓' }
+    notebook: { exts: ['ipynb'], label: 'Jupyter', icon: '📓' },
+
+    // standalone diagram sources
+    dot:      { exts: ['dot', 'gv'], label: 'Graphviz', icon: '🔗' },
+    mermaid:  { exts: ['mmd', 'mermaid'], label: 'Mermaid', icon: '🔗' },
+    wavedrom: { exts: ['wd', 'wavejson'], label: 'WaveDrom', icon: '📈' },
+    drawio:   { exts: ['drawio', 'dio'], label: 'draw.io', icon: '🔗' },
+    plantuml: { exts: ['puml', 'plantuml', 'pu', 'iuml'], label: 'PlantUML', icon: '🔗' }
   },
 
   // Syntax-highlighted code. `hljs`: grammar name. `extraLibs`: grammar files

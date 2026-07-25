@@ -19,10 +19,12 @@ const APP_JS = [
   'libs/mermaid.min.js',
   'libs/mammoth.browser.min.js',
   'libs/xlsx.full.min.js',
+  'libs/pako.min.js',
   'render/render-md.js',
   'render/render-code.js',
   'render/render-media.js',
   'render/render-doc.js',
+  'render/render-diagram.js',
   'render/sidebar.js',
   'render/app.js'
 ];
@@ -73,6 +75,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
       } catch (e) {
         sendResponse({ ok: false, error: String(e) });
+      }
+    })();
+    return true;
+  }
+
+  // Graphviz runs here, not in the content script: WASM needs the extension's
+  // 'wasm-unsafe-eval' CSP, which applies to extension pages (this worker).
+  if (msg.action === 'rx-graphviz') {
+    (async () => {
+      try {
+        if (typeof Viz === 'undefined') importScripts('libs/viz-standalone.js');
+        const viz = await Viz.instance();
+        sendResponse({ ok: true, svg: viz.renderString(msg.dot, { format: 'svg' }) });
+      } catch (e) {
+        sendResponse({ ok: false, error: String((e && e.message) || e) });
       }
     })();
     return true;
