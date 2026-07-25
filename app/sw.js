@@ -17,9 +17,12 @@ const APP_JS = [
   'libs/wavedrom.min.js',
   'libs/wavedrom-skin-default.js',
   'libs/mermaid.min.js',
+  'libs/mammoth.browser.min.js',
+  'libs/xlsx.full.min.js',
   'render/render-md.js',
   'render/render-code.js',
   'render/render-media.js',
+  'render/render-doc.js',
   'render/sidebar.js',
   'render/app.js'
 ];

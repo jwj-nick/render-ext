@@ -135,6 +135,31 @@ Nick 지시: VCD 제외 전 포맷 추가, hwpx-tool 통합, 3단계로 나눠 �
 - 검증: harness **52/52**(신규 20 — registry 6·CSV 7·ANSI 7). 실렌더 스크린샷 4종
   (csv/log/svg/png) 전부 정상. 샘플 추가: coverage.csv·sim.log·dataflow.svg·datapath.png.
 
+### v0.6.0 (P2) — HWPX·docx·xlsx·pptx·ipynb
+- **hwpx-tool 통합**: `src/{zip,xml,xml-tree,extract,header,render,hwpx}.js`를 `app/libs/hwpx/`에
+  **원본 그대로 벤더링**(`VENDOR.md`에 출처 커밋·재동기화 명령·"여기서 고치지 말 것" 명시).
+  manifest `web_accessible_resources`에 등록 → `render-doc.js`가 동적 `import()`로 로드.
+  BinData 이미지는 blob 대신 **data: URL**(file:// 페이지에서 blob은 opaque origin).
+- 신규 `render/render-doc.js`: rxRenderHwpx / rxRenderDocx(mammoth, 이미지 base64) /
+  rxRenderXlsx(SheetJS, 시트 탭) / rxRenderPptx(**hwpx zip.js 재사용** — 슬라이드 텍스트만) /
+  rxRenderNotebook(마크다운 셀은 rxRenderMarkdown 재사용, 출력 텍스트/이미지/HTML표/**ANSI traceback**).
+  ipynb 목차는 마크다운 셀 헤딩을 모아 id 중복 제거 후 사이드바 Contents로.
+- **잡은 버그 3건(자체검증)**:
+  1. `import()`가 **문서가 아니라 스크립트 URL 기준**으로 해석 → `app/app/...` 중복.
+     `rxLibUrl`을 절대 URL(`new URL('../'+rel, document.currentScript.src)`)로 수정.
+  2. 샘플 생성기: `ZipFile::CreateFromDirectory`가 항목명을 **역슬래시**로 기록 → OOXML 리더가
+     거부("could not find main document part"). ZipArchive로 항목별 생성 + `/` 정규화.
+  3. `.rx-nb-md .rx-md-root` 자손 셀렉터 오류(그 요소 자신) → `min-height:100vh`가 남아 셀 사이
+     100vh 공백. `.rx-md-root.rx-nb-md`로 수정.
+  (부수: ps1을 UTF-8 BOM으로 저장해야 PS5.1이 한글 파싱 — 샘플 한글 깨짐 해결.
+   ipynb 샘플의 raw ESC는 JSON 규격 위반이라 `` 이스케이프로 수정.)
+- 검증: harness **67/67**(신규 15 — 문서 registry/라이브러리/노트북 7·HWPX 3 등). 실렌더
+  스크린샷 5종 전부 정상(HWPX 표·병합셀·서식, docx 한글·표, xlsx 시트탭, pptx 슬라이드, ipynb 전체).
+- ⚠️ ES 모듈은 file://에서 CORS로 못 읽어 **harness는 localhost 서빙으로 실행**(확장은
+  chrome-extension:// origin이라 무관). `tests/app_demo.html`은 file/http 양쪽 지원하도록 base 계산.
+- 신규 샘플: sample.hwpx(hwpx-tool 합성본) · design_note.docx · metrics.xlsx · review_deck.pptx ·
+  analysis.ipynb + 생성기 `tools/make-office-samples.ps1`.
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼

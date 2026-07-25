@@ -110,15 +110,36 @@ window.rxApp = (() => {
       contentSet(md.node);
       await rxRenderDiagrams(md.node); // attached now — safe to measure
       if (md.title) document.title = md.title;
+    } else if (spec.kind === 'notebook') {
+      out = await rxRenderNotebook(payload, spec);
+      state.renderedNode = out.node;
+      contentSet(out.node);
+      await rxRenderDiagrams(out.node); // markdown cells may hold mermaid
+      if (out.title) document.title = out.title;
+      // headings come from separate markdown cells — re-unique the ids for the TOC
+      const seen = new Set();
+      headings = [...out.node.querySelectorAll('h1,h2,h3,h4,h5,h6')].map((h) => {
+        let id = h.id || 'cell';
+        let n = 1;
+        while (seen.has(id)) id = (h.id || 'cell') + '-' + n++;
+        seen.add(id);
+        h.id = id;
+        return h;
+      });
     } else {
       if (spec.kind === 'image') out = rxRenderImage(dataUrl(payload, spec), spec);
       else if (spec.kind === 'pdf') out = rxRenderPdf(dataUrl(payload, spec), spec);
       else if (spec.kind === 'svg') out = rxRenderSvg(payload, spec);
       else if (spec.kind === 'table') out = rxRenderTable(payload, spec);
       else if (spec.kind === 'log') out = rxRenderLog(payload, spec);
+      else if (spec.kind === 'hwpx' || spec.kind === 'hwp') out = await rxRenderHwpx(rxB64ToBytes(payload.b64), spec);
+      else if (spec.kind === 'docx') out = await rxRenderDocx(rxB64ToBytes(payload.b64), spec);
+      else if (spec.kind === 'xlsx') out = rxRenderXlsx(rxB64ToBytes(payload.b64), spec);
+      else if (spec.kind === 'pptx') out = await rxRenderPptx(rxB64ToBytes(payload.b64), spec);
       else out = rxRenderCode(payload, spec);
       state.renderedNode = out.node;
       contentSet(out.node);
+      if (out.title && spec.kind !== 'image' && spec.kind !== 'pdf') document.title = out.title;
     }
 
     sidebar.showToc(headings);

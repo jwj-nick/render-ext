@@ -19,7 +19,15 @@ const RX_REGISTRY = {
     svg:   { exts: ['svg'], label: 'SVG', icon: '🖼' },
     pdf:   { exts: ['pdf'], label: 'PDF', binary: true, icon: '📕' },
     table: { exts: ['csv', 'tsv'], label: 'Table', icon: '📊' },
-    log:   { exts: ['log', 'txt', 'text', 'out', 'rpt', 'err'], label: 'Text / Log', icon: '📃' }
+    log:   { exts: ['log', 'txt', 'text', 'out', 'rpt', 'err'], label: 'Text / Log', icon: '📃' },
+
+    // documents (zip containers -> read as bytes)
+    hwpx:  { exts: ['hwpx'], label: 'HWPX', binary: true, icon: '📘' },
+    hwp:   { exts: ['hwp'], label: 'HWP (legacy)', binary: true, icon: '📘' },
+    docx:  { exts: ['docx'], label: 'Word', binary: true, icon: '📘' },
+    xlsx:  { exts: ['xlsx', 'xlsm', 'xls'], label: 'Excel', binary: true, icon: '📗' },
+    pptx:  { exts: ['pptx'], label: 'PowerPoint', binary: true, icon: '📙' },
+    notebook: { exts: ['ipynb'], label: 'Jupyter', icon: '📓' }
   },
 
   // Syntax-highlighted code. `hljs`: grammar name. `extraLibs`: grammar files

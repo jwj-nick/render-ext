@@ -191,6 +191,135 @@ html.rx-page body {
 .rx-log .rx-bg6 { background: #d8f5f7; }
 .rx-log .rx-bg7 { background: #eaeef2; }
 
+/* ---- documents: hwpx / docx / xlsx / pptx ------------------------------ */
+.rx-doc {
+  min-height: 100vh;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #f6f8fa;
+}
+.rx-doc-hwpx .rx-doc-section,
+.rx-doc-docx {
+  margin: 0 auto 24px;
+  max-width: 900px;
+  padding: 40px 48px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+}
+.rx-doc-docx img { max-width: 100%; }
+.rx-doc-note {
+  color: #57606a;
+  text-align: center;
+}
+
+.rx-doc-xlsx { padding: 0; }
+.rx-sheet-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px 0;
+  overflow-x: auto;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+.rx-sheet-tab {
+  border: 1px solid #d0d7de;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  padding: 4px 12px;
+  background: #eaeef2;
+  color: #57606a;
+  font: 12px system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rx-sheet-tab.active {
+  background: #ffffff;
+  color: #24292f;
+  font-weight: 600;
+}
+
+.rx-slide {
+  margin: 0 auto 20px;
+  max-width: 860px;
+  padding: 28px 36px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+  border-radius: 4px;
+}
+.rx-slide-num {
+  margin-bottom: 12px;
+  font: 600 11px system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  color: #8c959f;
+  text-transform: uppercase;
+}
+.rx-slide p:first-of-type {
+  font-size: 20px;
+  font-weight: 600;
+}
+.rx-slide p { margin: 6px 0; }
+
+/* ---- jupyter notebook --------------------------------------------------- */
+.rx-nb {
+  background: #f6f8fa;
+  padding: 24px 16px;
+}
+.rx-nb-cell {
+  max-width: 980px;
+  margin: 0 auto 14px;
+}
+/* the markdown root IS the .rx-nb-md element — not a descendant of it */
+.rx-md-root.rx-nb-md {
+  max-width: none;
+  min-height: 0;
+  padding: 4px 8px;
+  margin: 0;
+}
+.rx-nb-prompt {
+  font: 11px ui-monospace, Consolas, monospace;
+  color: #8250df;
+  margin-bottom: 2px;
+}
+.rx-nb-code {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d0d7de;
+  border-left: 3px solid #8250df;
+  border-radius: 4px;
+  background: #ffffff;
+  overflow-x: auto;
+  font-size: 12.5px;
+}
+.rx-nb-code code.hljs { background: transparent; padding: 0; }
+.rx-nb-out {
+  padding: 2px 14px 0 17px;
+}
+.rx-nb-stream {
+  margin: 6px 0;
+  padding: 8px 10px;
+  background: #ffffff;
+  border-radius: 4px;
+  font: 12px/1.45 ui-monospace, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+.rx-nb-stderr {
+  background: #ffebe9;
+  color: #82071e;
+}
+.rx-nb-img {
+  max-width: 100%;
+  background: #fff;
+  border-radius: 4px;
+}
+.rx-nb-html {
+  overflow-x: auto;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 6px;
+}
+
 /* ---- markdown view ---------------------------------------------------- */
 .rx-md-root {
   box-sizing: border-box;
@@ -446,4 +575,30 @@ html.rx-page-code body,
   .rx-log .rx-bg5 { background: #3c1e70; }
   .rx-log .rx-bg6 { background: #0c3d47; }
   .rx-log .rx-bg7 { background: #21262d; }
+
+  .rx-doc,
+  .rx-nb { background: #0d1117; }
+  .rx-doc-hwpx .rx-doc-section,
+  .rx-doc-docx,
+  .rx-slide {
+    background: #ffffff;   /* documents keep their paper look */
+    color: #24292f;
+  }
+  .rx-doc-note { color: #8b949e; }
+  .rx-sheet-tabs {
+    background: #161b22;
+    border-bottom-color: #30363d;
+  }
+  .rx-sheet-tab {
+    border-color: #30363d;
+    background: #21262d;
+    color: #8b949e;
+  }
+  .rx-sheet-tab.active { background: #0d1117; color: #c9d1d9; }
+  .rx-nb-code,
+  .rx-nb-stream,
+  .rx-nb-html { background: #161b22; border-color: #30363d; }
+  .rx-nb-stream { color: #c9d1d9; }
+  .rx-nb-stderr { background: #3d1418; color: #ffa198; }
+  .rx-nb-prompt { color: #d2a8ff; }
 }

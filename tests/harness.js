@@ -274,6 +274,67 @@ function t(name, ok, detail) {
     t('ansi: cursor-move escapes swallowed',
       rxParseAnsi('a\x1b[2Kb').map((s) => s.text).join('') === 'ab');
     t('ansi: detector', rxHasAnsi('x\x1b[31my') && !rxHasAnsi('plain text'));
+
+    // -- 13. document formats (phase 2) ------------------------------------
+    t('registry: hwpx/docx/xlsx/pptx are binary docs',
+      rxLookupExt('hwpx').kind === 'hwpx' && rxLookupExt('hwpx').binary === true &&
+      rxLookupExt('docx').binary === true && rxLookupExt('xlsx').binary === true &&
+      rxLookupExt('pptx').binary === true);
+    t('registry: ipynb is text (notebook)',
+      rxLookupExt('ipynb').kind === 'notebook' && !rxLookupExt('ipynb').binary);
+    t('doc libs present: mammoth + XLSX',
+      typeof mammoth !== 'undefined' && typeof XLSX !== 'undefined');
+    t('doc renderers defined',
+      typeof rxRenderHwpx === 'function' && typeof rxRenderDocx === 'function' &&
+      typeof rxRenderXlsx === 'function' && typeof rxRenderPptx === 'function' &&
+      typeof rxRenderNotebook === 'function');
+
+    // notebook rendering (no network / no libs beyond marked+hljs)
+    const NB = JSON.stringify({
+      cells: [
+        { cell_type: 'markdown', source: ['# NB Title\n', '\n', 'body **bold**'] },
+        { cell_type: 'code', execution_count: 7, source: ['x = 1\n', 'print(x)'],
+          outputs: [
+            { output_type: 'stream', name: 'stdout', text: ['1\n'] },
+            { output_type: 'error', ename: 'ValueError', evalue: 'boom',
+              traceback: ['\x1b[1;31mValueError\x1b[0m: boom'] }
+          ] }
+      ],
+      metadata: { language_info: { name: 'python' } }
+    });
+    const nb = await rxRenderNotebook(NB, { file: 'x.ipynb' });
+    t('notebook: title from first h1', nb.title === 'NB Title', 'got ' + nb.title);
+    t('notebook: cell count in note', /2 cells \(1 code\)/.test(nb.note), nb.note);
+    t('notebook: markdown cell rendered', !!nb.node.querySelector('.rx-nb-md strong'));
+    t('notebook: code highlighted', !!nb.node.querySelector('.rx-nb-code .hljs-built_in, .rx-nb-code .hljs-keyword, .rx-nb-code .hljs-number'));
+    t('notebook: prompt shows execution count',
+      (nb.node.querySelector('.rx-nb-prompt') || {}).textContent === 'In [7]:');
+    t('notebook: stdout output present',
+      [...nb.node.querySelectorAll('.rx-nb-stream')].some((p) => p.textContent.trim() === '1'));
+    t('notebook: error traceback ANSI-coloured',
+      !!nb.node.querySelector('.rx-nb-stderr .rx-fg1, .rx-nb-stderr .rx-b'));
+
+    // hwpx: vendored engine loads and renders the real sample
+    // (rxFetchBinary falls back to XHR here — fetch() cannot read file://)
+    try {
+      const bin = await rxFetchBinary('../samples/sample.hwpx', 'application/hwp+zip');
+      const hw = await rxRenderHwpx(rxB64ToBytes(bin.b64), { file: 'sample.hwpx' });
+      t('hwpx: engine renders sample', !!hw.node.querySelector('.hwpx-page'), hw.note);
+      t('hwpx: title from document metadata',
+        /synthetic/.test(hw.title), 'title=' + hw.title);
+      t('hwpx: Korean text present', /합성 샘플|샘플/.test(hw.node.textContent));
+    } catch (e) {
+      t('hwpx: engine renders sample', false, String(e));
+    }
+
+    // legacy binary .hwp must fail with the friendly message, not a crash
+    try {
+      const ole = new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0, 0, 0, 0]);
+      await rxRenderHwpx(ole, { file: 'old.hwp' });
+      t('hwp: legacy binary rejected with a message', false, 'no error thrown');
+    } catch (e) {
+      t('hwp: legacy binary rejected with a message', /구형 바이너리/.test(e.message), e.message);
+    }
   } catch (e) {
     t('UNEXPECTED HARNESS ERROR', false, String(e && e.stack || e));
   }

@@ -44,6 +44,11 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 | **PDF** | `.pdf` | Chrome PDF 뷰어 내장 |
 | **표** | `.csv .tsv` | 표 렌더(헤더 고정·행번호·구분자 자동감지) |
 | **로그** | `.log .txt .out .rpt .err` | ANSI 컬러 해석 |
+| **HWPX** | `.hwpx` | 한/글 문서 — 서식·표·이미지 ([hwpx-tool](https://jwj-nick.github.io/hwpx/) 엔진 통합). 구형 `.hwp`는 안내 메시지 |
+| **Word** | `.docx` | 제목·서식·목록·표·이미지 (mammoth) |
+| **Excel** | `.xlsx .xlsm .xls` | 시트 탭 + 표 (SheetJS) |
+| **PowerPoint** | `.pptx` | 슬라이드별 텍스트 (레이아웃 미지원) |
+| **Jupyter** | `.ipynb` | 마크다운(mermaid 포함)·코드 강조·출력(텍스트/이미지/HTML표)·ANSI traceback |
 | HTML | `.html` | 확장 비관여 — 새 탭에서 브라우저가 렌더 |
 - 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 열기) on/off.
   변경은 새로 여는 탭부터 적용.
@@ -78,7 +83,10 @@ app/                    ← Chrome에 로드하는 디렉토리
 │   ├── app.js            뷰어 셸 컨트롤러 (사이드바+콘텐츠, 파일/폴더 열기, 에러)
 │   ├── sidebar.js        사이드바 (Files 네비게이터 + Contents 목차) + 디렉토리 파싱 헬퍼
 │   ├── render-md.js      rxRenderMarkdown / rxRenderDiagrams (마크다운→노드, mermaid·wavedrom)
-│   └── render-code.js    rxRenderCode (코드→노드, hljs+줄번호)
+│   ├── render-code.js    rxRenderCode (코드→노드, hljs+줄번호)
+│   ├── render-media.js   이미지·SVG·PDF·CSV표·ANSI로그 (+ CSV/ANSI 파서)
+│   └── render-doc.js     HWPX·docx·xlsx·pptx·ipynb
+├── libs/hwpx/           hwpx-tool 벤더링 (VENDOR.md 참조 — 원본 그대로, 재동기화 가능)
 ├── styles/              base.css / sidebar.css / hljs-theme.css(라이트+다크 결합)
 ├── options/             설정 팝업 겸 옵션 페이지 (chrome.storage.sync)
 ├── icons/               16/32/48/128 PNG (tools/make-icons.ps1로 생성)
