@@ -1,0 +1,9 @@
+module,line_cov,branch_cov,toggle_cov,asserts,notes
+NV_NVDLA_cmac,98.4,95.1,91.2,142,"clean"
+NV_NVDLA_csc,94.7,88.3,84.0,208,"sparse weights path low"
+NV_NVDLA_sdp,99.1,97.6,93.8,167,"clean"
+axi_arbiter,87.2,79.5,71.4,54,"QoS arbitration, needs directed tests"
+axi_arbiter_tb,100.0,100.0,100.0,0,"testbench"
+cdma_wt,91.0,85.2,77.9,96,"he said ""needs review"" on the CBUF handshake"
+pdp_core,96.3,92.0,88.1,73,"clean"
+rubik_core,89.8,81.7,74.6,61,"contract mode untested"

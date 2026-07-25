@@ -112,6 +112,29 @@ content script 자동 주입 / SW 메시징·주입 / MIME·file 액세스 / 옵
   `C:/01_Labs/render-ext/app` 슬래시 정상 + 뷰어 유지 확인.
 - 배포 0.4.1. **Nick: 확장 새로고침(↻).**
 
+## 10차 (2026-07-25) — 뷰어 확장 3단계 착수
+Nick 지시: VCD 제외 전 포맷 추가, hwpx-tool 통합, 3단계로 나눠 순차 진행.
+계획: **P1 v0.5.0** 미디어/데이터(무의존) → **P2 v0.6.0** HWPX·docx·xlsx·ipynb →
+**P3 v0.7.0** graphviz·drawio·단독 다이어그램·PlantUML(옵트인).
+사전 조사: hwpx-tool(`C:\01_Labs\hwpx-tool`)은 **제로 의존성 바닐라 ESM**
+(`src/{zip,xml,xml-tree,header,render,hwpx}.js` + `BASE_CSS`) → web_accessible_resources +
+동적 `import()`로 원본 그대로 벤더링 가능(빌드 불필요, 업스트림 재동기화 쉬움). P2에서 사용.
+
+### v0.5.0 (P1) — 이미지·SVG·PDF·CSV·ANSI 로그
+- `common/registry.js` 재구성: `viewers{image,svg,pdf,table,log}` + `RX_MIME`. rxLookupExt이
+  `{kind,label,binary,icon,mime}` 반환 → 사이드바 아이콘도 종류별.
+- **바이너리 경로 신설**: SW `rx-fetch-bin`(fetch→arrayBuffer→chunked btoa→base64) +
+  `rxFetchBinary`/`rxB64ToBytes`. data: URL로 넘겨 **file:// 서브리소스 제약을 원천 회피**
+  (P2의 zip 컨테이너도 이 경로 재사용).
+- `render/render-media.js` 신규: rxRenderImage(클릭 1:1 토글·치수) / rxRenderSvg(DOMPurify svg
+  프로필) / rxRenderPdf(embed) / rxRenderTable(RFC4180 파서+구분자 자동감지, 헤더 sticky) /
+  rxRenderLog(ANSI SGR→span, 16색+bold/dim/italic/underline, 2MB 상한).
+- app.js render() 디스패치를 kind 기반으로 일반화. 텍스트 계열만 Raw 토글 노출.
+- detect.js: **이미지 직접 열기**(contentType image/* + 단일 IMG)도 인수 → 사이드바 확보.
+  SVG/PDF 직접 열기는 Chrome 기본 뷰어에 양보(사이드바에서 클릭하면 인라인).
+- 검증: harness **52/52**(신규 20 — registry 6·CSV 7·ANSI 7). 실렌더 스크린샷 4종
+  (csv/log/svg/png) 전부 정상. 샘플 추가: coverage.csv·sim.log·dataflow.svg·datapath.png.
+
 ## 아이디어 백로그 (Nick 제시 요청, 2026-07-09)
 - 디렉토리 페이지(dirlist)에도 동일 사이드바 부착해 파일↔폴더 UX 일관화
 - 코드 뷰: 라인 클릭 시 `#L42` 앵커/하이라이트, 코드블록 복사 버튼

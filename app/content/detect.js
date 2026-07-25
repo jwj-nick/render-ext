@@ -23,8 +23,27 @@
       return;
     }
 
-    // B. raw text file (single <pre>, textual content-type)
-    const ct = (document.contentType || '').toLowerCase();
+    // B. raster image opened directly (Chrome shows <body><img>) — take over so
+    //    the sidebar is available. SVG/PDF are left to Chrome's own viewer.
+    const ctAll = (document.contentType || '').toLowerCase();
+    if (ctAll.startsWith('image/') && ctAll !== 'image/svg+xml') {
+      if (!cfg.code) return;
+      const b = document.body;
+      if (!b || b.childElementCount !== 1 || b.firstElementChild.tagName !== 'IMG') return;
+      window.__rxSpec = {
+        mode: 'file',
+        kind: 'image',
+        binary: true,
+        label: 'Image',
+        mime: ctAll,
+        file: decodeURIComponent(location.pathname.split('/').pop() || '')
+      };
+      send();
+      return;
+    }
+
+    // C. raw text file (single <pre>, textual content-type)
+    const ct = ctAll;
     const textual =
       ct === 'text/plain' ||
       ct === 'text/markdown' ||
@@ -45,17 +64,11 @@
     let hit = m ? rxLookupExt(m[1]) : null;
     if (!hit && (ct === 'text/markdown' || ct === 'text/x-markdown')) hit = { kind: 'markdown' };
     if (!hit) return;
-    if (hit.kind === 'markdown' && !cfg.markdown) return;
-    if (hit.kind === 'code' && !cfg.code) return;
+    if (hit.kind === 'markdown' ? !cfg.markdown : !cfg.code) return;
 
-    window.__rxSpec = {
-      mode: 'file',
-      kind: hit.kind,
-      langKey: hit.langKey || null,
-      hljs: hit.hljs || null,
-      label: hit.label || 'Markdown',
+    window.__rxSpec = Object.assign({ mode: 'file' }, hit, {
       file: decodeURIComponent(location.pathname.split('/').pop() || '')
-    };
+    });
     send();
   });
 

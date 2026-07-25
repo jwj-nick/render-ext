@@ -15,9 +15,8 @@ window.rxApp = (() => {
     const file = decodeURIComponent((url.split('/').pop() || '').split(/[?#]/)[0]);
     const ext = rxExtOf(file);
     const hit = typeof rxLookupExt === 'function' ? rxLookupExt(ext) : null;
-    if (hit && hit.kind === 'markdown') return { kind: 'markdown', file, label: 'Markdown' };
-    if (hit && hit.kind === 'code') return { kind: 'code', file, hljs: hit.hljs, label: hit.label };
-    if (hintSpec && hintSpec.kind === 'markdown') return { kind: 'markdown', file, label: 'Markdown' };
+    if (hit) return Object.assign({ file }, hit);
+    if (hintSpec && hintSpec.kind) return Object.assign({ file }, hintSpec);
     // unknown extension -> show as plain text (still readable)
     return { kind: 'code', file, hljs: null, label: 'Text' };
   }
@@ -91,29 +90,50 @@ window.rxApp = (() => {
     contentSet(box);
   }
 
-  async function render(url, text, hintSpec) {
+  // payload: text for text kinds, { b64, mime } for binary kinds.
+  async function render(url, payload, hintSpec) {
     const spec = classify(url, hintSpec);
-    state.rawText = text;
+    const isBinary = !!spec.binary;
+    state.rawText = isBinary ? null : payload;
     state.showingRaw = false;
     toolbar.btn.textContent = 'Raw';
+    document.title = spec.file;
+
+    let out;
+    let headings = [];
 
     if (spec.kind === 'markdown') {
-      const { node, headings, title } = await rxRenderMarkdown(text, spec);
-      state.renderedNode = node;
-      contentSet(node);
-      await rxRenderDiagrams(node); // node is now attached — safe to measure
-      document.title = title || spec.file;
-      setLabel(spec.label + ' · ' + spec.file);
-      sidebar.showToc(headings);
+      const md = await rxRenderMarkdown(payload, spec);
+      out = md;
+      headings = md.headings;
+      state.renderedNode = md.node;
+      contentSet(md.node);
+      await rxRenderDiagrams(md.node); // attached now — safe to measure
+      if (md.title) document.title = md.title;
     } else {
-      const { node, note, lines } = rxRenderCode(text, spec);
-      state.renderedNode = node;
-      contentSet(node);
-      document.title = spec.file;
-      setLabel(`${spec.label} · ${lines} lines${note ? ' · ' + note : ''}`);
-      sidebar.showToc([]);
+      if (spec.kind === 'image') out = rxRenderImage(dataUrl(payload, spec), spec);
+      else if (spec.kind === 'pdf') out = rxRenderPdf(dataUrl(payload, spec), spec);
+      else if (spec.kind === 'svg') out = rxRenderSvg(payload, spec);
+      else if (spec.kind === 'table') out = rxRenderTable(payload, spec);
+      else if (spec.kind === 'log') out = rxRenderLog(payload, spec);
+      else out = rxRenderCode(payload, spec);
+      state.renderedNode = out.node;
+      contentSet(out.node);
     }
-    toolbar.btn.style.display = '';
+
+    sidebar.showToc(headings);
+    const bits = [spec.label];
+    if (out && out.lines != null) bits.push(out.lines + ' lines');
+    if (out && out.note) bits.push(out.note);
+    bits.push(spec.file);
+    setLabel(bits.join(' · '));
+    // Raw source only makes sense for text-backed views
+    toolbar.btn.style.display = state.rawText != null ? '' : 'none';
+  }
+
+  function dataUrl(payload, spec) {
+    return 'data:' + (payload.mime || spec.mime || 'application/octet-stream') +
+      ';base64,' + payload.b64;
   }
 
   function toggleRaw() {
@@ -132,9 +152,12 @@ window.rxApp = (() => {
 
   async function openFile(url, hintSpec) {
     try {
-      const text = await rxFetchText(url);
+      const spec = classify(url, hintSpec);
+      const payload = spec.binary
+        ? await rxFetchBinary(url, spec.mime)
+        : await rxFetchText(url);
       state.fileUrl = url;
-      await render(url, text, hintSpec);
+      await render(url, payload, hintSpec);
       const dir = url.slice(0, url.lastIndexOf('/') + 1);
       if (dir !== state.dirUrl) {
         state.dirUrl = dir;

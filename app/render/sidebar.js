@@ -116,6 +116,51 @@ async function rxFetchText(url) {
   }
 }
 
+// Binary read -> { b64, mime, size }. Same routing rule as rxFetchText: through
+// the service worker inside the extension, direct XHR in the demo/harness.
+function rxSwFetchBin(url, mime) {
+  return new Promise((resolve, reject) => {
+    try {
+      chrome.runtime.sendMessage({ action: 'rx-fetch-bin', url, mime }, (res) => {
+        if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+        if (res && res.ok) return resolve(res);
+        reject(new Error((res && res.error) || 'no response from service worker'));
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+async function rxFetchBinary(url, mime) {
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    return rxSwFetchBin(url, mime);
+  }
+  const buf = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = () => resolve(xhr.response);
+    xhr.onerror = () => reject(new Error('XHR failed for ' + url));
+    xhr.send();
+  });
+  const bytes = new Uint8Array(buf);
+  const CHUNK = 0x8000;
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return { b64: btoa(bin), mime: mime || 'application/octet-stream', size: buf.byteLength };
+}
+
+// base64 -> Uint8Array (for zip-based formats handled in later phases)
+function rxB64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
 // ---- sidebar controller --------------------------------------------------
 
 function rxCreateSidebar(opts) {
@@ -202,7 +247,8 @@ function rxCreateSidebar(opts) {
 
     const ext = e.isDir ? '' : rxExtOf(e.name);
     const isHtml = ext === 'html' || ext === 'htm';
-    const renderable = !e.isDir && typeof rxLookupExt === 'function' && !!rxLookupExt(ext);
+    const hit = !e.isDir && typeof rxLookupExt === 'function' ? rxLookupExt(ext) : null;
+    const renderable = !!hit;
 
     if (e.isDir) {
       a.addEventListener('click', (ev) => { ev.preventDefault(); onOpenDir(full); });
@@ -214,7 +260,8 @@ function rxCreateSidebar(opts) {
 
     const icon = document.createElement('span');
     icon.className = 'rx-sb-icon';
-    icon.textContent = e.up ? '⬆' : e.isDir ? '📁' : isHtml ? '🌐' : renderable ? '📄' : '·';
+    icon.textContent = e.up ? '⬆' : e.isDir ? '📁' : isHtml ? '🌐'
+      : hit ? (hit.icon || '📄') : '·';
     const label = document.createElement('span');
     label.className = 'rx-sb-name';
     label.textContent = e.up ? '상위 폴더' : e.name;

@@ -230,6 +230,50 @@ function t(name, ok, detail) {
       rxChildUrl('file:///C:/my%20dir/', { url: 'a%20b.md', isDir: false }) === 'file:///C:/my%20dir/a%20b.md');
     t('childUrl: parent (up) passed through',
       rxChildUrl('file:///C:/idea/migration/', { up: true, url: 'file:///C:/idea/' }) === 'file:///C:/idea/');
+
+    // -- 10. registry: new viewer kinds ------------------------------------
+    t('registry: png -> image (binary)',
+      rxLookupExt('png').kind === 'image' && rxLookupExt('png').binary === true);
+    t('registry: svg -> svg (text)',
+      rxLookupExt('svg').kind === 'svg' && !rxLookupExt('svg').binary);
+    t('registry: pdf -> pdf (binary)',
+      rxLookupExt('pdf').kind === 'pdf' && rxLookupExt('pdf').binary === true);
+    t('registry: csv -> table, log -> log',
+      rxLookupExt('csv').kind === 'table' && rxLookupExt('log').kind === 'log');
+    t('registry: sv still code/verilog',
+      rxLookupExt('sv').kind === 'code' && rxLookupExt('sv').hljs === 'verilog');
+    t('registry: html NOT claimed (opens in a new tab)', rxLookupExt('html') === null);
+
+    // -- 11. CSV parser -----------------------------------------------------
+    const csv = 'a,b,c\n1,"x,y",3\n2,"he said ""hi""",4\n5,"multi\nline",6\n';
+    const rows = rxParseDelimited(csv, ',');
+    t('csv: row count', rows.length === 4, 'got ' + rows.length);
+    t('csv: quoted comma kept in one field', rows[1][1] === 'x,y', JSON.stringify(rows[1]));
+    t('csv: doubled quote unescaped', rows[2][1] === 'he said "hi"', JSON.stringify(rows[2]));
+    t('csv: newline inside quotes', rows[3][1] === 'multi\nline', JSON.stringify(rows[3]));
+    t('csv: BOM stripped', rxParseDelimited('\ufeffa,b\n1,2\n', ',')[0][0] === 'a');
+    t('csv: delimiter guess (comma / tab / semicolon)',
+      rxGuessDelim('a,b,c\n', 'csv') === ',' &&
+      rxGuessDelim('a\tb\tc\n', 'csv') === '\t' &&
+      rxGuessDelim('a;b;c\n', 'csv') === ';');
+    t('csv: guess ignores separators inside quotes',
+      rxGuessDelim('"a;b;c;d"\tx\n', 'csv') === '\t');
+
+    // -- 12. ANSI parser ----------------------------------------------------
+    const ansi = 'plain \x1b[31mred\x1b[0m \x1b[1;32mboldgreen\x1b[0m end';
+    const segs = rxParseAnsi(ansi);
+    const joined = segs.map((s) => s.text).join('');
+    t('ansi: escape codes removed from text',
+      joined === 'plain red boldgreen end', JSON.stringify(joined));
+    t('ansi: red segment classed', segs.some((s) => s.text === 'red' && s.cls === 'rx-fg1'),
+      JSON.stringify(segs.map((s) => [s.text, s.cls])));
+    t('ansi: bold+green combined',
+      segs.some((s) => s.text === 'boldgreen' && s.cls.includes('rx-fg2') && s.cls.includes('rx-b')));
+    t('ansi: reset clears state', segs[segs.length - 1].cls === '');
+    t('ansi: bright fg (90-97) mapped', rxParseAnsi('\x1b[91mx')[0].cls === 'rx-fg9');
+    t('ansi: cursor-move escapes swallowed',
+      rxParseAnsi('a\x1b[2Kb').map((s) => s.text).join('') === 'ab');
+    t('ansi: detector', rxHasAnsi('x\x1b[31my') && !rxHasAnsi('plain text'));
   } catch (e) {
     t('UNEXPECTED HARNESS ERROR', false, String(e && e.stack || e));
   }

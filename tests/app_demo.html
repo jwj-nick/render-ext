@@ -26,6 +26,7 @@
   <script src="../app/common/registry.js"></script>
   <script src="../app/render/render-md.js"></script>
   <script src="../app/render/render-code.js"></script>
+  <script src="../app/render/render-media.js"></script>
   <script src="../app/render/sidebar.js"></script>
   <script src="../app/render/app.js"></script>
   <script>
@@ -37,6 +38,10 @@
       if (q.includes('err')) await rxApp.openFile(base + 'this_file_does_not_exist.md');
       else if (q.includes('file')) await rxApp.openFile(base + 'feature_test.md');
       else if (q.includes('code')) await rxApp.openFile(base + 'axi_arbiter.sv');
+      else if (q.includes('csv')) await rxApp.openFile(base + 'coverage.csv');
+      else if (q.includes('log')) await rxApp.openFile(base + 'sim.log');
+      else if (q.includes('svg')) await rxApp.openFile(base + 'dataflow.svg');
+      else if (q.includes('png')) await rxApp.openFile(base + 'datapath.png');
       else if (q.includes('nav')) {
         // multi-level navigation: open the repo root, then click a subfolder.
         // Proves rxChildUrl builds correct URLs across hops (the slash bug).

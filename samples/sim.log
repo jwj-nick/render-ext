@@ -1,0 +1,19 @@
+Chronologic VCS simulator copyright 1991-2025
+Running: axi_arbiter_tb
+[34m[INFO ][0m 0ns  reset asserted
+[34m[INFO ][0m 100ns reset released
+[32m[PASS ][0m 320ns write burst len=4 id=2
+[32m[PASS ][0m 480ns read burst len=8 id=0
+[33m[WARN ][0m 512ns backpressure on s_axi_wready for 12 cycles
+[1;31m[ERROR][0m 640ns [1mQoS violation[0m: master 3 starved for 41 cycles (limit 32)
+[33m[WARN ][0m 700ns coverage hole: burst_len==16
+[32m[PASS ][0m 880ns narrow transfer wstrb=0x3
+[36m[DEBUG][0m 900ns grant_ptr=2 pending=0b0110
+[1;31m[ERROR][0m 1024ns assertion [4ma_no_grant_without_req[0m failed
+[35m[TRACE][0m 1024ns   arb_state=GRANT req=0b0000 grant=0b0100
+
+[1mSimulation summary[0m
+  [32mPASS[0m : 4
+  [33mWARN[0m : 2
+  [31mFAIL[0m : 2
+[41m FATAL [0m 2 errors -> exit 1

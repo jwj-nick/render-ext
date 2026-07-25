@@ -31,7 +31,20 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
   - 사이드바 **Contents**: Markdown 목차 + 스크롤 연동. Markdown이면 Files/Contents 토글, 그 외 Files만.
   - 폴더를 열었는데 아직 연 파일이 없으면 오른쪽은 비어 있음. 없는 파일/렌더 실패 시 사이드바는
     유지되고 오른쪽에 실패 메시지 표시.
-- 우상단 pill: **Raw ↔ Rendered** 전환, 파일 타입/줄 수.
+- 우상단 pill: **Raw ↔ Rendered** 전환, 파일 타입/줄 수. (이미지·PDF는 원문이 없어 숨김)
+
+### 지원 포맷
+
+| 종류 | 확장자 | 렌더 |
+|---|---|---|
+| Markdown | `.md` 외 | mermaid·wavedrom·`:::`콜아웃·front matter·목차 |
+| 코드 | `.v .sv .vhd .tcl .py .json .yaml .c .cpp .ts .sh .diff` 외 | 문법강조 + 줄번호 |
+| **이미지** | `.png .jpg .gif .webp .bmp .ico .avif` | 인라인(클릭 시 원본 크기), 치수 표시 |
+| **SVG** | `.svg` | 인라인 렌더(DOMPurify 정화) + Raw 소스 |
+| **PDF** | `.pdf` | Chrome PDF 뷰어 내장 |
+| **표** | `.csv .tsv` | 표 렌더(헤더 고정·행번호·구분자 자동감지) |
+| **로그** | `.log .txt .out .rpt .err` | ANSI 컬러 해석 |
+| HTML | `.html` | 확장 비관여 — 새 탭에서 브라우저가 렌더 |
 - 툴바 아이콘 클릭 = 설정 팝업: 전체 on/off + 기능별(Markdown/코드/폴더 열기) on/off.
   변경은 새로 여는 탭부터 적용.
 - 다크/라이트: OS 설정 자동 추종.
