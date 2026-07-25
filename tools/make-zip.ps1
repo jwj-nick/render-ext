@@ -14,6 +14,12 @@ $root = Split-Path $PSScriptRoot -Parent
 $manifest = Get-Content (Join-Path $root 'app\manifest.json') -Raw | ConvertFrom-Json
 $ver = $manifest.version
 
+# The displayed name carries the version (see tools/set-version.ps1) — refuse to
+# ship a zip whose card would show the wrong build.
+if ($manifest.name -notmatch [regex]::Escape("v$ver") + '$') {
+    throw "manifest name '$($manifest.name)' does not end with v$ver — run .\tools\set-version.ps1 $ver first"
+}
+
 $stage = Join-Path $env:TEMP "render-ext-zip-stage"
 $pkg = Join-Path $stage 'render-ext'
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
