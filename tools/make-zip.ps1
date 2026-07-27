@@ -9,6 +9,9 @@
 #     setup/register-mime.ps1     <- Windows MIME one-time setup
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 $root = Split-Path $PSScriptRoot -Parent
 
 $manifest = Get-Content (Join-Path $root 'app\manifest.json') -Raw | ConvertFrom-Json
@@ -34,8 +37,40 @@ $distDir = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force $distDir | Out-Null
 $zip = Join-Path $distDir "render-ext-v$ver.zip"
 if (Test-Path $zip) { Remove-Item -Force $zip }
-Compress-Archive -Path $pkg -DestinationPath $zip
+
+# Entry names MUST use forward slashes. Windows PowerShell 5.1's
+# Compress-Archive stores backslashes, which violates the zip spec: Explorer
+# copes, but 7-Zip / macOS / Linux then extract one flat file literally named
+# "render-ext\manifest.json" and the unpacked extension will not load. Build the
+# archive entry by entry so the separators are ours to control.
+$zipFile = [System.IO.Compression.ZipFile]::Open($zip, 'Create')
+try {
+    $base = (Resolve-Path $stage).Path.TrimEnd('\') + '\'
+    foreach ($f in Get-ChildItem -Recurse -File $stage) {
+        $name = $f.FullName.Substring($base.Length).Replace('\', '/')
+        $entry = $zipFile.CreateEntry($name, [System.IO.Compression.CompressionLevel]::Optimal)
+        $out = $entry.Open()
+        $bytes = [System.IO.File]::ReadAllBytes($f.FullName)
+        $out.Write($bytes, 0, $bytes.Length)
+        $out.Dispose()
+    }
+} finally {
+    $zipFile.Dispose()
+}
+
+# Verify before shipping: every entry must use '/' and manifest.json must be there.
+$check = [System.IO.Compression.ZipFile]::OpenRead($zip)
+try {
+    $bad = @($check.Entries | Where-Object { $_.FullName -like '*\*' })
+    if ($bad.Count) { throw "$($bad.Count) zip entries use backslashes" }
+    if (-not ($check.Entries | Where-Object { $_.FullName -eq 'render-ext/manifest.json' })) {
+        throw 'render-ext/manifest.json missing from the archive'
+    }
+    $count = $check.Entries.Count
+} finally {
+    $check.Dispose()
+}
 
 Remove-Item -Recurse -Force $stage
-Write-Host "built: $zip"
+Write-Host "built: $zip ($count entries, all '/')"
 Get-Item $zip | Select-Object Name, @{n='MB';e={[Math]::Round($_.Length/1MB,2)}}
