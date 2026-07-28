@@ -6,6 +6,14 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 
 전 라이브러리 로컬 번들(MV3, CDN 없음). 상세 배경: `CLAUDE.md`, 리서치: `docs/phase0_research.md`.
 
+## 다운로드
+
+**[⬇ 최신 zip 바로 받기](https://github.com/jwj-nick/render-ext/releases/latest/download/render-ext-latest.zip)**
+· [모든 릴리스](https://github.com/jwj-nick/render-ext/releases)
+
+빌드 불필요 — 압축을 풀면 `render-ext/` 폴더가 나오고, 설치 안내(`INSTALL.md`)와
+Windows MIME 등록 스크립트(`setup/register-mime.ps1`)가 함께 들어 있습니다.
+
 ## 설치
 
 **→ [INSTALL.md](INSTALL.md)** (설치 가이드 SSOT — zip에도 동봉됨). 요약:
@@ -20,7 +28,9 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 압축해제된 확장 프로그램 로드 → ③ 세부정보에서 **"파일 URL 액세스 허용" ON** →
 ④ `.md`/`.sv` 파일 드래그로 확인.
 
-릴리스 zip 재생성: `tools/make-zip.ps1` → `dist/` (빌드 없음 — app/ 그대로 패키징).
+릴리스 절차: `tools/set-version.ps1 X.Y.Z` → `tools/make-zip.ps1` (버전본 + `render-ext-latest.zip`
+두 개를 `dist/`에 생성) → `git tag` → `gh release create vX.Y.Z dist/render-ext-vX.Y.Z.zip
+dist/render-ext-latest.zip`. 고정 이름 자산 덕분에 위 "최신 zip" 링크가 항상 최신을 가리킵니다.
 
 ## 사용
 
@@ -66,7 +76,7 @@ raw 파일(Markdown·Verilog/SV·Python·JSON·YAML·C/C++ …)을 Chrome에서 
 |---|---|---|
 | T1 | `feature_test.md` 열기 | front matter 접힘·`:::` 콜아웃·mermaid 2종·**의도된 mermaid 오류 1종**(에러 박스)·wavedrom·SV/Python 강조·```check 뱃지·표 |
 | T2 | `axi_arbiter.sv` 열기 | SystemVerilog 강조 + 줄번호 (사이드바 Files만) |
-| T3 | `perf_test_2MB.v` (2.1MB) | 대용량 → 강조 자동 OFF("large file") + 줄번호 유지 |
+| T3 | `NV_NVDLA_CMAC_CORE_active.v` (2.1MB) | 대용량 → 강조 자동 OFF("large file") + 줄번호 유지 |
 | T4 | `NV_NVDLA_cmac.v` / `uvm_manifest.json` / `sample.yaml` | NVDLA RTL·JSON·YAML 강조 |
 | T5 | **폴더 열기** `file:///C:/01_Labs/render-ext/samples/` | 사이드바에 목록, 오른쪽 "파일을 선택하세요" |
 | T6 | ★ **사이드바에서 폴더 클릭** (상위 폴더/하위 폴더) | 왼쪽 목록만 갱신, **오른쪽 뷰어 그대로 유지**(페이지 이동 X) |
@@ -106,6 +116,7 @@ tests/harness.html       자가 검증 하네스 (78항목: 파이프라인·파
 tests/app_demo.html      뷰어 셸 자가 검증 (?file ?code ?csv ?log ?hwpx ?docx ?dot ?dio …)
 samples/                 실파일 테스트 세트
 docs/phase0_research.md  Phase 0 리서치 결론
+LICENSE · THIRD-PARTY.md · samples/NOTICE.md   라이선스 및 출처
 ```
 
 ## 언어 추가 방법

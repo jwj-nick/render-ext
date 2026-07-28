@@ -72,5 +72,13 @@ try {
 }
 
 Remove-Item -Recurse -Force $stage
+
+# A second copy under a fixed name so the "latest" download URL never changes:
+#   .../releases/latest/download/render-ext-latest.zip
+# Upload BOTH assets when creating a release.
+$latest = Join-Path $distDir 'render-ext-latest.zip'
+Copy-Item $zip $latest -Force
+
 Write-Host "built: $zip ($count entries, all '/')"
-Get-Item $zip | Select-Object Name, @{n='MB';e={[Math]::Round($_.Length/1MB,2)}}
+Write-Host "       + $latest (fixed-name copy for the latest-download link)"
+Get-Item $zip, $latest | Select-Object Name, @{n='MB';e={[Math]::Round($_.Length/1MB,2)}}
